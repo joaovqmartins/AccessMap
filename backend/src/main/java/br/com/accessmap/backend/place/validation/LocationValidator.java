@@ -1,4 +1,4 @@
-package br.com.accessmap.backend.shared.validation;
+package br.com.accessmap.backend.place.validation;
 
 public class LocationValidator {
     private LocationValidator(){
