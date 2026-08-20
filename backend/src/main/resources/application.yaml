@@ -1,6 +1,13 @@
 spring:
-  application:
-    name: accessmap-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/accessmap
+    username: postgres
+    password: accessmap123
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 server:
   port: 8080
