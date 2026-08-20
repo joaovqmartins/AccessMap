@@ -1,8 +1,8 @@
-package br.com.accessmap.backend.interfaces.user;
+package br.com.accessmap.backend.identity.controller;
 
-import br.com.accessmap.backend.application.user.UserService;
-import br.com.accessmap.backend.application.user.dto.UserRequestDto;
-import br.com.accessmap.backend.domain.user.entity.User;
+import br.com.accessmap.backend.identity.dto.UserRequestDto;
+import br.com.accessmap.backend.identity.model.User;
+import br.com.accessmap.backend.identity.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

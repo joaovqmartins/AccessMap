@@ -1,4 +1,4 @@
-package br.com.accessmap.backend.shared.exception;
+package br.com.accessmap.backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

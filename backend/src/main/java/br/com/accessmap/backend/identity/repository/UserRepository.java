@@ -1,10 +1,10 @@
-package br.com.accessmap.backend.infrastructure.user;
+package br.com.accessmap.backend.identity.repository;
 
-import br.com.accessmap.backend.domain.user.entity.User;
+import br.com.accessmap.backend.identity.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface JpaUserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, String> {
 
     boolean existsByEmail(String email);
 

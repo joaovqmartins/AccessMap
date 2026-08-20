@@ -1,4 +1,4 @@
-package br.com.accessmap.backend.domain.user.entity;
+package br.com.accessmap.backend.identity.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

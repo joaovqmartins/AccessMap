@@ -1,4 +1,4 @@
-package br.com.accessmap.backend.application.user.dto;
+package br.com.accessmap.backend.identity.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;

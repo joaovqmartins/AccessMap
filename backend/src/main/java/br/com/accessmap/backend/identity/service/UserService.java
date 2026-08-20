@@ -1,8 +1,8 @@
-package br.com.accessmap.backend.application.user;
+package br.com.accessmap.backend.identity.service;
 
-import br.com.accessmap.backend.application.user.dto.UserRequestDto;
-import br.com.accessmap.backend.domain.user.entity.User;
-import br.com.accessmap.backend.domain.user.repository.UserRepository;
+import br.com.accessmap.backend.identity.dto.UserRequestDto;
+import br.com.accessmap.backend.identity.model.User;
+import br.com.accessmap.backend.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
