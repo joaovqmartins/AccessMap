@@ -1,8 +1,9 @@
 package br.com.accessmap.backend.interfaces.user;
 
 import br.com.accessmap.backend.application.user.UserService;
-import br.com.accessmap.backend.application.user.dto.UserRequest;
+import br.com.accessmap.backend.application.user.dto.UserRequestDto;
 import br.com.accessmap.backend.domain.user.entity.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +30,12 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody UserRequest request) {
+    public ResponseEntity<User> create(@Valid @RequestBody UserRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable String id, @RequestBody UserRequest request) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<User> update(@Valid @PathVariable String id, @RequestBody UserRequestDto request) {
         return ResponseEntity.ok(userService.update(id, request));
     }
 
