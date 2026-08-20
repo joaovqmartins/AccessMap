@@ -1,6 +1,6 @@
 package br.com.accessmap.backend.application.user;
 
-import br.com.accessmap.backend.application.user.dto.UserRequest;
+import br.com.accessmap.backend.application.user.dto.UserRequestDto;
 import br.com.accessmap.backend.domain.user.entity.User;
 import br.com.accessmap.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,30 +26,29 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
     }
 
-    public User create(UserRequest request) {
+    public User create(UserRequestDto request) {
         validateRequiredFields(request);
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
         }
 
-        String now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
         User user = User.builder()
-                .id(UUID.randomUUID().toString())
                 .name(request.getName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .age(request.getAge())
                 .accessibilityNeeds(request.getAccessibilityNeeds())
                 .password(request.getPassword())
-                .createdAt(now)
-                .updatedAt(now)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         return userRepository.save(user);
     }
 
-    public User update(String id, UserRequest request) {
+    public User update(String id, UserRequestDto request) {
         User existing = findById(id);
 
         if (request.getEmail() != null && userRepository.existsByEmailExcludingId(request.getEmail(), id)) {
@@ -64,7 +61,7 @@ public class UserService {
         if (request.getAge() != null) existing.setAge(request.getAge());
         if (request.getAccessibilityNeeds() != null) existing.setAccessibilityNeeds(request.getAccessibilityNeeds());
         if (request.getPassword() != null) existing.setPassword(request.getPassword());
-        existing.setUpdatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        existing.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(existing);
     }
@@ -74,7 +71,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    private void validateRequiredFields(UserRequest request) {
+    private void validateRequiredFields(UserRequestDto request) {
         if (isBlank(request.getName()) ||
                 isBlank(request.getEmail()) ||
                 isBlank(request.getPhone()) ||
