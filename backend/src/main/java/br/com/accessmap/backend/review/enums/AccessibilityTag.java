@@ -1,0 +1,15 @@
+package br.com.accessmap.backend.review.enums;
+
+public enum AccessibilityTag {
+    MOBILIDADE_REDUZIDA,
+    DEFICIENCIA_VISUAL,
+    DEFICIENCIA_AUDITIVA,
+    RAMPAS_E_ENTRADAS,
+    ELEVADORES,
+    BANHEIROS_ADAPTADOS,
+    VAGAS_ESTACIONAMENTO,
+    SINALIZACAO,
+    ESPACO_CIRCULACAO,
+    ATENDIMENTO,
+    OUTROS
+}
