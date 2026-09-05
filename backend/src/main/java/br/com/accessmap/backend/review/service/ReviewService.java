@@ -1,17 +1,26 @@
 package br.com.accessmap.backend.review.service;
 
+import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.service.UserService;
+import br.com.accessmap.backend.place.model.TagStats;
 import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.dto.ReviewRequestDto;
+import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
+import br.com.accessmap.backend.review.enums.AccessibilityTag;
+import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -21,17 +30,39 @@ public class ReviewService {
     private final PlaceService placeService;
     private final UserService userService;
 
+    public List<Review> findAll() {
+        return reviewRepository.findByStatus(ReviewStatus.PUBLICADA);
+    }
+
     public List<Review> findByPlaceId(String placeId) {
-        return reviewRepository.findByPlaceId(placeId);
+        return reviewRepository.findByPlaceIdAndStatus(placeId, ReviewStatus.PUBLICADA);
+    }
+
+    public List<Review> findByUserId(String userId) {
+        return reviewRepository.findByUserIdAndStatus(userId, ReviewStatus.PUBLICADA);
+    }
+
+    public List<Review> findByUserIdAndPlaceId(String userId, String placeId) {
+        return reviewRepository.findByUserIdAndPlaceIdAndStatus(userId, placeId, ReviewStatus.PUBLICADA);
     }
 
     public Review findById(String id) {
-        return reviewRepository.findById(id)
+        return reviewRepository.findByIdAndStatus(id, ReviewStatus.PUBLICADA)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Avaliação não encontrada"));
     }
 
+    @Transactional
     public Review create(ReviewRequestDto request) {
-        userService.findById(request.getUserId());
+        User author = userService.findById(request.getUserId());
+
+        if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(
+                request.getUserId(), request.getPlaceId(), ReviewStatus.PUBLICADA)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Você já avaliou este local. Edite sua avaliação existente."
+            );
+        }
+
         placeService.findOrCreateByPlaceId(request.getPlaceId());
 
         Review review = Review.builder()
@@ -40,13 +71,72 @@ public class ReviewService {
                 .rating(request.getRating())
                 .comment(request.getComment())
                 .tags(request.getTags())
+                .reviewerNeeds(author.getAccessibilityNeeds() == null
+                        ? null
+                        : new HashSet<>(author.getAccessibilityNeeds()))
+                .status(ReviewStatus.PUBLICADA)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
         Review saved = reviewRepository.save(review);
-        placeService.registerNewReview(request.getPlaceId(), request.getRating());
+        recalculatePlaceAggregates(request.getPlaceId());
 
         return saved;
+    }
+
+    @Transactional
+    public Review update(String id, ReviewUpdateRequestDto request) {
+        Review existing = findById(id);
+
+        if (request.getTags() != null && request.getTags().isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe ao menos uma característica de acessibilidade"
+            );
+        }
+
+        if (request.getRating() != null) existing.setRating(request.getRating());
+        if (request.getComment() != null) existing.setComment(request.getComment());
+        if (request.getTags() != null) existing.setTags(request.getTags());
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        Review saved = reviewRepository.save(existing);
+        recalculatePlaceAggregates(existing.getPlaceId());
+
+        return saved;
+    }
+
+    @Transactional
+    public void delete(String id) {
+        Review existing = findById(id);
+
+        existing.setStatus(ReviewStatus.REMOVIDA);
+        existing.setUpdatedAt(LocalDateTime.now());
+        reviewRepository.save(existing);
+
+        recalculatePlaceAggregates(existing.getPlaceId());
+    }
+
+    /**
+     * Recalcula os agregados do local a partir das avaliações publicadas, em vez de somar
+     * incrementalmente — assim o total nunca diverge, mesmo após edições e remoções.
+     */
+    private void recalculatePlaceAggregates(String placeId) {
+        ReviewRepository.PlaceAggregate aggregate =
+                reviewRepository.aggregateByPlaceId(placeId, ReviewStatus.PUBLICADA);
+
+        Map<AccessibilityTag, TagStats> tagStats = new EnumMap<>(AccessibilityTag.class);
+
+        reviewRepository.tagStatsByPlaceId(placeId, ReviewStatus.PUBLICADA).forEach(row -> {
+            TagStats stats = tagStats.computeIfAbsent(row.getTag(), tag -> TagStats.builder().build());
+            switch (row.getAssessment()) {
+                case ADEQUADO -> stats.setAdequadoCount(row.getTotal());
+                case INADEQUADO -> stats.setInadequadoCount(row.getTotal());
+                case INEXISTENTE -> stats.setInexistenteCount(row.getTotal());
+            }
+        });
+
+        placeService.applyAggregates(placeId, aggregate.getReviewCount(), aggregate.getRatingSum(), tagStats);
     }
 }
