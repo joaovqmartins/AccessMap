@@ -1,11 +1,13 @@
 package br.com.accessmap.backend.identity.model;
 
+import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -29,7 +31,11 @@ public class User {
 
     private Integer age;
 
-    private String accessibilityNeeds;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_accessibility_needs", joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "need")
+    private Set<AccessibilityNeed> accessibilityNeeds;
 
     @Column(nullable = false)
     private String password;

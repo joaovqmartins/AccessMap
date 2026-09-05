@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -76,7 +77,7 @@ public class UserService {
                 isBlank(request.getEmail()) ||
                 isBlank(request.getPhone()) ||
                 request.getAge() == null ||
-                isBlank(request.getAccessibilityNeeds()) ||
+                isEmpty(request.getAccessibilityNeeds()) ||
                 isBlank(request.getPassword())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -90,5 +91,9 @@ public class UserService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private boolean isEmpty(Collection<?> value) {
+        return value == null || value.isEmpty();
     }
 }
