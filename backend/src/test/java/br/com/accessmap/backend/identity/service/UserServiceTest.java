@@ -1,6 +1,7 @@
 package br.com.accessmap.backend.identity.service;
 
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
+import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +38,7 @@ class UserServiceTest {
         dto.setPassword("senha1234");
         dto.setPhone("11999999999");
         dto.setAge(30);
-        dto.setAccessibilityNeeds("Cadeirante");
+        dto.setAccessibilityNeeds(Set.of(AccessibilityNeed.MOBILIDADE_REDUZIDA));
         return dto;
     }
 
@@ -56,6 +58,15 @@ class UserServiceTest {
     void deveRejeitarCriacaoComCampoObrigatorioFaltando() {
         UserRequestDto dto = validRequest();
         dto.setName(null);
+
+        assertThrows(ResponseStatusException.class, () -> userService.create(dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarCriacaoSemNecessidadeDeAcessibilidade() {
+        UserRequestDto dto = validRequest();
+        dto.setAccessibilityNeeds(Set.of());
 
         assertThrows(ResponseStatusException.class, () -> userService.create(dto));
         verify(userRepository, never()).save(any());
@@ -93,7 +104,7 @@ class UserServiceTest {
                 .email("antigo@email.com")
                 .phone("11988887777")
                 .age(25)
-                .accessibilityNeeds("Nenhuma")
+                .accessibilityNeeds(Set.of(AccessibilityNeed.OUTROS))
                 .password("senhaAntiga")
                 .build();
 

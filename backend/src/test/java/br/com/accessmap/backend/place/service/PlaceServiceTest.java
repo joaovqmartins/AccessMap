@@ -1,7 +1,9 @@
 package br.com.accessmap.backend.place.service;
 
 import br.com.accessmap.backend.place.model.Place;
+import br.com.accessmap.backend.place.model.TagStats;
 import br.com.accessmap.backend.place.repository.PlaceRepository;
+import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,6 +11,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +30,10 @@ class PlaceServiceTest {
 
     @InjectMocks
     private PlaceService placeService;
+
+    private Map<AccessibilityTag, TagStats> semTags() {
+        return new EnumMap<>(AccessibilityTag.class);
+    }
 
     @Test
     void deveLancarNotFoundQuandoPlaceIdNaoExiste() {
@@ -59,26 +67,55 @@ class PlaceServiceTest {
     }
 
     @Test
-    void deveDefinirScoreIgualAoRatingNaPrimeiraReview() {
-        Place novo = Place.builder().placeId("abc").averageScore(0.0).reviewCount(0).build();
-        when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(novo));
-        when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        placeService.registerNewReview("abc", 5);
-
-        assertThat(novo.getReviewCount()).isEqualTo(1);
-        assertThat(novo.getAverageScore()).isEqualTo(5.0);
-    }
-
-    @Test
-    void deveRecalcularMediaPonderadaAoRegistrarSegundaReview() {
-        Place existente = Place.builder().placeId("abc").averageScore(5.0).reviewCount(1).build();
+    void deveDerivarMediaDaSomaEDaContagem() {
+        Place existente = Place.builder().placeId("abc").build();
         when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(existente));
         when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        placeService.registerNewReview("abc", 3);
+        placeService.applyAggregates("abc", 4, 14, semTags());
 
-        assertThat(existente.getReviewCount()).isEqualTo(2);
-        assertThat(existente.getAverageScore()).isEqualTo(4.0);
+        assertThat(existente.getReviewCount()).isEqualTo(4);
+        assertThat(existente.getAverageScore()).isEqualTo(3.5);
+        assertThat(existente.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void deveZerarAgregadoQuandoNaoHaReviewPublicada() {
+        Place existente = Place.builder().placeId("abc").averageScore(4.5).reviewCount(6).build();
+        when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(existente));
+        when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        placeService.applyAggregates("abc", 0, 0, semTags());
+
+        assertThat(existente.getReviewCount()).isEqualTo(0);
+        assertThat(existente.getAverageScore()).isEqualTo(0.0);
+    }
+
+    @Test
+    void deveSubstituirEstatisticasPorTag() {
+        Place existente = Place.builder().placeId("abc").build();
+        existente.getTagStats().put(AccessibilityTag.ELEVADORES, TagStats.builder().adequadoCount(9L).build());
+        when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(existente));
+        when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Map<AccessibilityTag, TagStats> novas = semTags();
+        novas.put(AccessibilityTag.RAMPAS_E_ENTRADAS, TagStats.builder().adequadoCount(2L).inadequadoCount(1L).build());
+
+        placeService.applyAggregates("abc", 3, 12, novas);
+
+        assertThat(existente.getTagStats()).containsOnlyKeys(AccessibilityTag.RAMPAS_E_ENTRADAS);
+        assertThat(existente.getTagStats().get(AccessibilityTag.RAMPAS_E_ENTRADAS).getAdequadoCount()).isEqualTo(2L);
+        assertThat(existente.getTagStats().get(AccessibilityTag.RAMPAS_E_ENTRADAS).getInadequadoCount()).isEqualTo(1L);
+    }
+
+    @Test
+    void deveCriarPlaceAoAplicarAgregadosDeLocalAindaNaoRegistrado() {
+        when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.empty());
+        when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        placeService.applyAggregates("abc", 1, 5, semTags());
+
+        verify(placeRepository, never()).findByPlaceId("outro");
+        verify(placeRepository, org.mockito.Mockito.times(2)).save(any(Place.class));
     }
 }

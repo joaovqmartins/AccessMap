@@ -1,7 +1,10 @@
 package br.com.accessmap.backend.identity.dto;
 
+import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import java.util.Set;
 
 @Data
 public class UserRequestDto {
@@ -16,5 +19,5 @@ public class UserRequestDto {
     @Min(value = 0, message = "Idade inválida")
     @Max(value = 120, message = "Idade inválida")
     private Integer age;
-    private String accessibilityNeeds;
+    private Set<AccessibilityNeed> accessibilityNeeds;
 }
