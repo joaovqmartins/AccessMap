@@ -91,6 +91,9 @@ public class RefreshTokenService {
         refreshTokenRepository.revokeAllActiveByUserId(userId, LocalDateTime.now());
     }
 
+    // @Transactional aqui, e nao so em revokeAll: a chamada interna nao passa pelo proxy,
+    // e o UPDATE do @Modifying exige transacao ativa.
+    @Transactional
     @EventListener
     public void onPasswordChanged(PasswordChangedEvent event) {
         revokeAll(event.userId());

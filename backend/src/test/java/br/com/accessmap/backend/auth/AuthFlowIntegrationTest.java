@@ -160,7 +160,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void rotaProtegidaSemTokenDevolve401Json() throws Exception {
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.mensagem").value("Autenticação necessária"));
@@ -170,7 +170,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
     void rotaProtegidaComTokenValidoPassa() throws Exception {
         JsonNode body = registrar(emailUnico());
 
-        mockMvc.perform(get("/api/users")
+        mockMvc.perform(get("/api/users/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer(body.get("accessToken").asString())))
                 .andExpect(status().isOk());
     }
@@ -191,7 +191,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         // emitido há 10 min com validade de 5: expirou há 5 min, além da tolerância de 60s do validador
         String expirado = tokenService.issueAccessToken(user, Instant.now().minus(Duration.ofMinutes(10)), Duration.ofMinutes(5));
 
-        mockMvc.perform(get("/api/users").header(HttpHeaders.AUTHORIZATION, bearer(expirado)))
+        mockMvc.perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(expirado)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
     }
@@ -202,7 +202,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         String token = body.get("accessToken").asString();
         String adulterado = token.substring(0, token.length() - 4) + "abcd";
 
-        mockMvc.perform(get("/api/users").header(HttpHeaders.AUTHORIZATION, bearer(adulterado)))
+        mockMvc.perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(adulterado)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensagem").value("Token inválido ou expirado"));
     }
