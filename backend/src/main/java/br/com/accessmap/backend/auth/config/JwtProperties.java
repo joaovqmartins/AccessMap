@@ -13,7 +13,7 @@ import java.time.Duration;
 public record JwtProperties(
 
         @NotBlank(message = "Defina a variavel de ambiente JWT_SECRET (veja .env.example)")
-        @Size(min = 32, message = "JWT_SECRET precisa ter no minimo 32 caracteres para HS256")
+        @Size(min = 32, message = "Defina a variavel de ambiente JWT_SECRET com no minimo 32 caracteres (veja .env.example)")
         String secret,
 
         @NotNull Duration accessTokenTtl,
