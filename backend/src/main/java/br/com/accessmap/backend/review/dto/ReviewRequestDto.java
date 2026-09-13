@@ -14,9 +14,6 @@ import java.util.Map;
 @Data
 public class ReviewRequestDto {
 
-    @NotBlank(message = "userId é obrigatório")
-    private String userId;
-
     @NotBlank(message = "placeId é obrigatório")
     private String placeId;
 

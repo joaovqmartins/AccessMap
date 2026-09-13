@@ -51,12 +51,13 @@ public class ReviewService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Avaliação não encontrada"));
     }
 
+    /** @param userId autor da avaliação, extraído do token — nunca do corpo da requisição. */
     @Transactional
-    public Review create(ReviewRequestDto request) {
-        User author = userService.findById(request.getUserId());
+    public Review create(String userId, ReviewRequestDto request) {
+        User author = userService.findById(userId);
 
         if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(
-                request.getUserId(), request.getPlaceId(), ReviewStatus.PUBLICADA)) {
+                userId, request.getPlaceId(), ReviewStatus.PUBLICADA)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Você já avaliou este local. Edite sua avaliação existente."
@@ -66,7 +67,7 @@ public class ReviewService {
         placeService.findOrCreateByPlaceId(request.getPlaceId());
 
         Review review = Review.builder()
-                .userId(request.getUserId())
+                .userId(userId)
                 .placeId(request.getPlaceId())
                 .rating(request.getRating())
                 .comment(request.getComment())
@@ -85,9 +86,14 @@ public class ReviewService {
         return saved;
     }
 
+    /**
+     * @param userId  quem está pedindo a alteração (subject do token)
+     * @param isAdmin se true, pode alterar avaliações de outros usuários (moderação)
+     */
     @Transactional
-    public Review update(String id, ReviewUpdateRequestDto request) {
+    public Review update(String id, String userId, boolean isAdmin, ReviewUpdateRequestDto request) {
         Review existing = findById(id);
+        assertOwnerOrAdmin(existing, userId, isAdmin);
 
         if (request.getTags() != null && request.getTags().isEmpty()) {
             throw new ResponseStatusException(
@@ -108,14 +114,24 @@ public class ReviewService {
     }
 
     @Transactional
-    public void delete(String id) {
+    public void delete(String id, String userId, boolean isAdmin) {
         Review existing = findById(id);
+        assertOwnerOrAdmin(existing, userId, isAdmin);
 
         existing.setStatus(ReviewStatus.REMOVIDA);
         existing.setUpdatedAt(LocalDateTime.now());
         reviewRepository.save(existing);
 
         recalculatePlaceAggregates(existing.getPlaceId());
+    }
+
+    private void assertOwnerOrAdmin(Review review, String userId, boolean isAdmin) {
+        if (!isAdmin && !review.getUserId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você não pode alterar a avaliação de outro usuário"
+            );
+        }
     }
 
     /**
