@@ -1,0 +1,15 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build
+target/
+
+# Segredos e ambiente local
+.env
+*.log
+
+# SO
+.DS_Store
+Thumbs.db
