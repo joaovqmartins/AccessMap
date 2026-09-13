@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -55,25 +57,49 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.findById(id));
     }
 
-    @Operation(summary = "Cria uma nova avaliação de acessibilidade para um local")
+    @Operation(summary = "Cria uma avaliação de acessibilidade para um local",
+            description = "O autor é o usuário autenticado. Um usuário só pode ter uma avaliação publicada por local.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Avaliação criada"),
-            @ApiResponse(responseCode = "400", description = "Campo obrigatório ausente ou nota fora do intervalo 1-5"),
-            @ApiResponse(responseCode = "404", description = "Usuário informado não existe")
+            @ApiResponse(responseCode = "400", description = "Campo obrigatório ausente, nota fora de 1-5 ou nenhuma tag"),
+            @ApiResponse(responseCode = "401", description = "Requer autenticação"),
+            @ApiResponse(responseCode = "409", description = "Usuário já avaliou este local")
     })
     @PostMapping
-    public ResponseEntity<Review> create(@Valid @RequestBody ReviewRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(request));
+    public ResponseEntity<Review> create(@AuthenticationPrincipal Jwt jwt,
+                                         @Valid @RequestBody ReviewRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(jwt.getSubject(), request));
     }
 
+    @Operation(summary = "Atualiza parcialmente uma avaliação",
+            description = "Somente o autor (ou um ADMIN) pode alterar.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Avaliação atualizada"),
+            @ApiResponse(responseCode = "403", description = "A avaliação pertence a outro usuário"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada")
+    })
     @PatchMapping("/{id}")
-    public ResponseEntity<Review> update(@PathVariable String id, @Valid @RequestBody ReviewUpdateRequestDto request) {
-        return ResponseEntity.ok(reviewService.update(id, request));
+    public ResponseEntity<Review> update(@AuthenticationPrincipal Jwt jwt,
+                                         @PathVariable String id,
+                                         @Valid @RequestBody ReviewUpdateRequestDto request) {
+        return ResponseEntity.ok(reviewService.update(id, jwt.getSubject(), isAdmin(jwt), request));
     }
 
+    @Operation(summary = "Remove uma avaliação",
+            description = "Somente o autor (ou um ADMIN) pode remover. A avaliação deixa de ser listada, mas é preservada.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Avaliação removida"),
+            @ApiResponse(responseCode = "403", description = "A avaliação pertence a outro usuário"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable String id) {
-        reviewService.delete(id);
+    public ResponseEntity<Map<String, String>> delete(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        reviewService.delete(id, jwt.getSubject(), isAdmin(jwt));
         return ResponseEntity.ok(Map.of("message", "Avaliação removida com sucesso"));
+    }
+
+    private boolean isAdmin(Jwt jwt) {
+        List<String> roles = jwt.getClaimAsStringList("roles");
+        return roles != null && roles.contains("ADMIN");
     }
 }

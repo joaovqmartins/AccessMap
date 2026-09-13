@@ -31,6 +31,32 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 * Git & GitHub Actions
 * Deploy contínuo na plataforma Railway
 
+## ▶️ Rodando o backend localmente
+
+Pré-requisitos: Docker, Java 17+.
+
+```bash
+# 1. Banco de dados
+docker compose up -d
+
+# 2. Segredo que assina os tokens JWT (obrigatório; o boot falha sem ele)
+export JWT_SECRET=$(openssl rand -base64 48)
+
+# 3. Opcional: primeiro usuário ADMIN, criado no boot se ainda não existir nenhum
+export ADMIN_EMAIL=admin@accessmap.local
+export ADMIN_PASSWORD=troque-esta-senha
+
+# 4. Sobe a API (Flyway aplica as migrações automaticamente)
+cd backend && ./mvnw spring-boot:run
+```
+
+No IntelliJ, defina as variáveis em *Run → Edit Configurations → Environment variables*.
+Todas as variáveis disponíveis estão documentadas em [`.env.example`](.env.example).
+
+Swagger: http://localhost:8080/swagger-ui.html — use **Authorize** com o `accessToken` de `/api/auth/login`.
+
+Testes (`./mvnw test`) sobem um Postgres descartável via Testcontainers; precisam do Docker rodando.
+
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
 * Gustavo Borges Hertz

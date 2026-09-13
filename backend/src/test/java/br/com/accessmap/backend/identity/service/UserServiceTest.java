@@ -2,13 +2,18 @@ package br.com.accessmap.backend.identity.service;
 
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
 import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
+import br.com.accessmap.backend.identity.enums.Role;
+import br.com.accessmap.backend.identity.event.PasswordChangedEvent;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -18,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,8 +34,19 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private UserService userService;
+
+    @BeforeEach
+    void stubEncoder() {
+        lenient().when(passwordEncoder.encode(anyString())).thenAnswer(inv -> "hash(" + inv.getArgument(0) + ")");
+    }
 
     private UserRequestDto validRequest() {
         UserRequestDto dto = new UserRequestDto();
@@ -51,6 +68,8 @@ class UserServiceTest {
 
         assertThat(criado.getName()).isEqualTo("Maria");
         assertThat(criado.getEmail()).isEqualTo("maria@email.com");
+        assertThat(criado.getPassword()).isEqualTo("hash(senha1234)");
+        assertThat(criado.getRole()).isEqualTo(Role.USER);
         verify(userRepository).save(any(User.class));
     }
 
@@ -131,6 +150,64 @@ class UserServiceTest {
         dto.setEmail("novo@email.com");
 
         assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+    }
+
+    @Test
+    void deveTrocarSenhaQuandoSenhaAtualConfere() {
+        User existente = User.builder().id("1").password("hash(antiga)").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+        when(passwordEncoder.matches("antiga", "hash(antiga)")).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setCurrentPassword("antiga");
+        dto.setPassword("novaSenha123");
+
+        User atualizado = userService.update("1", dto);
+
+        assertThat(atualizado.getPassword()).isEqualTo("hash(novaSenha123)");
+        verify(eventPublisher).publishEvent(new PasswordChangedEvent("1"));
+    }
+
+    @Test
+    void deveRejeitarTrocaDeSenhaComSenhaAtualErrada() {
+        User existente = User.builder().id("1").password("hash(antiga)").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+        when(passwordEncoder.matches("errada", "hash(antiga)")).thenReturn(false);
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setCurrentPassword("errada");
+        dto.setPassword("novaSenha123");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void deveRejeitarTrocaDeSenhaSemInformarSenhaAtual() {
+        User existente = User.builder().id("1").password("hash(antiga)").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setPassword("novaSenha123");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDevePublicarEventoQuandoSenhaNaoMuda() {
+        User existente = User.builder().id("1").name("Antigo").password("hash(antiga)").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setName("Novo");
+
+        userService.update("1", dto);
+
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

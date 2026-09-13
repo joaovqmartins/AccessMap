@@ -55,7 +55,6 @@ class ReviewServiceTest {
 
     private ReviewRequestDto validRequest() {
         ReviewRequestDto dto = new ReviewRequestDto();
-        dto.setUserId("user-1");
         dto.setPlaceId("place-1");
         dto.setRating(4);
         dto.setComment("Rampa de acesso boa, banheiro adaptado.");
@@ -123,7 +122,7 @@ class ReviewServiceTest {
         when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
         stubRecalculo(1, 4);
 
-        Review review = reviewService.create(validRequest());
+        Review review = reviewService.create("user-1", validRequest());
 
         assertThat(review.getUserId()).isEqualTo("user-1");
         assertThat(review.getPlaceId()).isEqualTo("place-1");
@@ -143,7 +142,7 @@ class ReviewServiceTest {
         when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
         stubRecalculo(1, 4);
 
-        Review review = reviewService.create(validRequest());
+        Review review = reviewService.create("user-1", validRequest());
 
         assertThat(review.getReviewerNeeds()).containsExactly(AccessibilityNeed.DEFICIENCIA_VISUAL);
         assertThat(review.getReviewerNeeds()).isNotSameAs(autor.getAccessibilityNeeds());
@@ -156,7 +155,7 @@ class ReviewServiceTest {
                 .thenReturn(true);
 
         ResponseStatusException erro =
-                assertThrows(ResponseStatusException.class, () -> reviewService.create(validRequest()));
+                assertThrows(ResponseStatusException.class, () -> reviewService.create("user-1", validRequest()));
 
         assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         verify(reviewRepository, never()).save(any());
@@ -166,10 +165,7 @@ class ReviewServiceTest {
     void deveRejeitarReviewParaUsuarioInexistente() {
         when(userService.findById("user-invalido")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        ReviewRequestDto dto = validRequest();
-        dto.setUserId("user-invalido");
-
-        assertThrows(ResponseStatusException.class, () -> reviewService.create(dto));
+        assertThrows(ResponseStatusException.class, () -> reviewService.create("user-invalido", validRequest()));
         verify(reviewRepository, never()).save(any());
     }
 
@@ -210,7 +206,7 @@ class ReviewServiceTest {
         ReviewUpdateRequestDto dto = new ReviewUpdateRequestDto();
         dto.setRating(2);
 
-        Review atualizado = reviewService.update("review-1", dto);
+        Review atualizado = reviewService.update("review-1", "user-1", false, dto);
 
         assertThat(atualizado.getRating()).isEqualTo(2);
         assertThat(atualizado.getComment()).isEqualTo("Comentario original");
@@ -230,7 +226,7 @@ class ReviewServiceTest {
         dto.setComment("Comentario novo");
         dto.setTags(Map.of(AccessibilityTag.ELEVADORES, TagAssessment.INEXISTENTE));
 
-        Review atualizado = reviewService.update("review-1", dto);
+        Review atualizado = reviewService.update("review-1", "user-1", false, dto);
 
         assertThat(atualizado.getComment()).isEqualTo("Comentario novo");
         assertThat(atualizado.getTags())
@@ -247,7 +243,7 @@ class ReviewServiceTest {
         ReviewUpdateRequestDto dto = new ReviewUpdateRequestDto();
         dto.setTags(Map.of());
 
-        assertThrows(ResponseStatusException.class, () -> reviewService.update("review-1", dto));
+        assertThrows(ResponseStatusException.class, () -> reviewService.update("review-1", "user-1", false, dto));
         verify(reviewRepository, never()).save(any());
     }
 
@@ -259,7 +255,7 @@ class ReviewServiceTest {
         ReviewUpdateRequestDto dto = new ReviewUpdateRequestDto();
         dto.setRating(3);
 
-        assertThrows(ResponseStatusException.class, () -> reviewService.update("id-invalido", dto));
+        assertThrows(ResponseStatusException.class, () -> reviewService.update("id-invalido", "user-1", false, dto));
         verify(reviewRepository, never()).save(any());
     }
 
@@ -270,7 +266,7 @@ class ReviewServiceTest {
                 .thenReturn(Optional.of(existente));
         stubRecalculo(0, 0);
 
-        reviewService.delete("review-1");
+        reviewService.delete("review-1", "user-1", false);
 
         ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
         verify(reviewRepository).save(captor.capture());
@@ -284,9 +280,49 @@ class ReviewServiceTest {
         when(reviewRepository.findByIdAndStatus("review-1", ReviewStatus.PUBLICADA))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class, () -> reviewService.delete("review-1"));
+        assertThrows(ResponseStatusException.class, () -> reviewService.delete("review-1", "user-1", false));
         verify(reviewRepository, never()).save(any());
         verify(placeService, never()).applyAggregates(anyString(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void deveImpedirOutroUsuarioDeAtualizarAReview() {
+        when(reviewRepository.findByIdAndStatus("review-1", ReviewStatus.PUBLICADA))
+                .thenReturn(Optional.of(reviewPublicada()));
+
+        ReviewUpdateRequestDto dto = new ReviewUpdateRequestDto();
+        dto.setRating(1);
+
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> reviewService.update("review-1", "user-2", false, dto));
+
+        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(reviewRepository, never()).save(any());
+    }
+
+    @Test
+    void deveImpedirOutroUsuarioDeRemoverAReview() {
+        when(reviewRepository.findByIdAndStatus("review-1", ReviewStatus.PUBLICADA))
+                .thenReturn(Optional.of(reviewPublicada()));
+
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> reviewService.delete("review-1", "user-2", false));
+
+        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(reviewRepository, never()).save(any());
+    }
+
+    @Test
+    void adminPodeRemoverReviewDeOutroUsuario() {
+        when(reviewRepository.findByIdAndStatus("review-1", ReviewStatus.PUBLICADA))
+                .thenReturn(Optional.of(reviewPublicada()));
+        stubRecalculo(0, 0);
+
+        reviewService.delete("review-1", "admin-1", true);
+
+        ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
+        verify(reviewRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(ReviewStatus.REMOVIDA);
     }
 
     @Test
@@ -304,7 +340,7 @@ class ReviewServiceTest {
 
         ReviewUpdateRequestDto dto = new ReviewUpdateRequestDto();
         dto.setRating(5);
-        reviewService.update("review-1", dto);
+        reviewService.update("review-1", "user-1", false, dto);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<AccessibilityTag, TagStats>> captor = ArgumentCaptor.forClass(Map.class);

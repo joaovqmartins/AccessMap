@@ -1,10 +1,13 @@
 package br.com.accessmap.backend.identity.service;
 
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
+import br.com.accessmap.backend.identity.event.PasswordChangedEvent;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,6 +20,8 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<User> findAll() {
         return userRepository.findAll();
@@ -41,7 +46,7 @@ public class UserService {
                 .phone(request.getPhone())
                 .age(request.getAge())
                 .accessibilityNeeds(request.getAccessibilityNeeds())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -56,15 +61,27 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
         }
 
+        boolean passwordChanged = request.getPassword() != null;
+        if (passwordChanged && (request.getCurrentPassword() == null
+                || !passwordEncoder.matches(request.getCurrentPassword(), existing.getPassword()))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha atual incorreta");
+        }
+
         if (request.getName() != null) existing.setName(request.getName());
         if (request.getEmail() != null) existing.setEmail(request.getEmail());
         if (request.getPhone() != null) existing.setPhone(request.getPhone());
         if (request.getAge() != null) existing.setAge(request.getAge());
         if (request.getAccessibilityNeeds() != null) existing.setAccessibilityNeeds(request.getAccessibilityNeeds());
-        if (request.getPassword() != null) existing.setPassword(request.getPassword());
+        if (passwordChanged) existing.setPassword(passwordEncoder.encode(request.getPassword()));
         existing.setUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(existing);
+        User saved = userRepository.save(existing);
+
+        if (passwordChanged) {
+            eventPublisher.publishEvent(new PasswordChangedEvent(saved.getId()));
+        }
+
+        return saved;
     }
 
     public void delete(String id) {
