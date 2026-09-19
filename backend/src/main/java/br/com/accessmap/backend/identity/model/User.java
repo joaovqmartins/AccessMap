@@ -1,6 +1,8 @@
 package br.com.accessmap.backend.identity.model;
 
 import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
+import br.com.accessmap.backend.identity.enums.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,8 +39,14 @@ public class User {
     @Column(name = "need")
     private Set<AccessibilityNeed> accessibilityNeeds;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
 
     private LocalDateTime createdAt;
 

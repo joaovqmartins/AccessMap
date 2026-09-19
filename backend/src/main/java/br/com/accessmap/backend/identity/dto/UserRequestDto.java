@@ -14,6 +14,7 @@ public class UserRequestDto {
     private String email;
     @Size(min = 8, message = "Senha deve ter no mínimo 8 caracteres")
     private String password;
+    private String currentPassword;
     @Pattern(regexp = "\\d{10,11}", message = "Telefone inválido")
     private String phone;
     @Min(value = 0, message = "Idade inválida")

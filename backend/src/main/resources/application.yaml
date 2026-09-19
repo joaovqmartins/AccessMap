@@ -1,13 +1,21 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/accessmap
-    username: postgres
-    password: accessmap123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/accessmap}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:accessmap123}
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
 
 server:
   port: 8080
+
+accessmap:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+    issuer: accessmap
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
