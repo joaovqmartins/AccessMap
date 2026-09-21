@@ -211,6 +211,54 @@ class UserServiceTest {
     }
 
     @Test
+    void deveRejeitarAtualizacaoComNomeVazio() {
+        User existente = User.builder().id("1").name("Nome Antigo").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setName("");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComEmailVazio() {
+        User existente = User.builder().id("1").email("antigo@email.com").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setEmail("");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComTelefoneVazio() {
+        User existente = User.builder().id("1").phone("11988887777").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setPhone("");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComNecessidadesDeAcessibilidadeVazias() {
+        User existente = User.builder().id("1").accessibilityNeeds(Set.of(AccessibilityNeed.OUTROS)).build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setAccessibilityNeeds(Set.of());
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void deveRemoverUsuarioExistente() {
         User existente = User.builder().id("1").build();
         when(userRepository.findById("1")).thenReturn(Optional.of(existente));

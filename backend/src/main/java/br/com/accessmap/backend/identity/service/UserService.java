@@ -56,6 +56,7 @@ public class UserService {
 
     public User update(String id, UserRequestDto request) {
         User existing = findById(id);
+        validateUpdatableFields(request);
 
         if (request.getEmail() != null && userRepository.existsByEmailExcludingId(request.getEmail(), id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
@@ -87,6 +88,27 @@ public class UserService {
     public void delete(String id) {
         findById(id);
         userRepository.deleteById(id);
+    }
+
+    /**
+     * No PATCH, um campo só pode ser omitido (null, mantém o valor atual) ou informado com
+     * conteúdo válido — nunca esvaziado. O DTO é compartilhado com a criação, onde os campos
+     * são obrigatórios, então essa checagem não pode virar {@code @NotBlank} nele: quebraria
+     * atualizações parciais legítimas que omitem outros campos.
+     */
+    private void validateUpdatableFields(UserRequestDto request) {
+        if (request.getName() != null && isBlank(request.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name não pode ser vazio");
+        }
+        if (request.getEmail() != null && isBlank(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email não pode ser vazio");
+        }
+        if (request.getPhone() != null && isBlank(request.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "phone não pode ser vazio");
+        }
+        if (request.getAccessibilityNeeds() != null && isEmpty(request.getAccessibilityNeeds())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "accessibilityNeeds não pode ser vazio");
+        }
     }
 
     private void validateRequiredFields(UserRequestDto request) {
