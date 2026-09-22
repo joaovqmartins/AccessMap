@@ -1,6 +1,6 @@
 # ♿ AccessMap
 
-O AccessMap é uma plataforma composta por um aplicativo mobile e um portal web que permite à comunidade mapear colaborativamente pontos de acessibilidade e barreiras urbanas. 
+O AccessMap é um aplicativo mobile que permite à comunidade mapear colaborativamente pontos de acessibilidade e barreiras urbanas. 
 
 O objetivo é fornecer informações reais e atualizadas sobre a acessibilidade dos espaços urbanos, garantindo maior autonomia para pessoas com deficiência ou mobilidade reduzida, além de gerar dados abertos para o embasamento de políticas públicas de inclusão.
 
@@ -21,11 +21,9 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 * Swagger/OpenAPI para documentação
 * JUnit e Mockito para testes automatizados
 
-**Front-end (Web e Mobile)**
-* React com TypeScript e Tailwind CSS (Portal Web)
-* Leaflet.js (Mapas interativos)
+**Front-end (Mobile)**
 * React Native com Expo (Aplicativo Mobile)
-* Jest e Cypress para testes
+* Jest para testes
 
 **DevOps & CI/CD**
 * Git & GitHub Actions
