@@ -1,8 +1,0 @@
-spring:
-  jpa:
-    show-sql: false
-
-accessmap:
-  jwt:
-    # Segredo fixo apenas para testes. Nunca use em outro ambiente.
-    secret: chave-de-teste-com-pelo-menos-32-bytes-de-tamanho
