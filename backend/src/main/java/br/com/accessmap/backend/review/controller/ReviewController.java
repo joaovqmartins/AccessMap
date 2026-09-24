@@ -11,6 +11,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,23 +32,26 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @Operation(summary = "Lista as avaliações de um local")
+    @Operation(summary = "Lista as avaliações de um local",
+            description = "Paginado; por padrão ordenado das mais recentes para as mais antigas.")
     @GetMapping
-    public ResponseEntity<List<Review>> list(@RequestParam(required = false) String placeId,
-                                             @RequestParam(required = false) String userId) {
+    public ResponseEntity<Page<Review>> list(
+            @RequestParam(required = false) String placeId,
+            @RequestParam(required = false) String userId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         boolean hasPlace = placeId != null && !placeId.isBlank();
         boolean hasUser = userId != null && !userId.isBlank();
 
         if (hasPlace && hasUser) {
-            return ResponseEntity.ok(reviewService.findByUserIdAndPlaceId(userId, placeId));
+            return ResponseEntity.ok(reviewService.findByUserIdAndPlaceId(userId, placeId, pageable));
         }
         if (hasPlace) {
-            return ResponseEntity.ok(reviewService.findByPlaceId(placeId));
+            return ResponseEntity.ok(reviewService.findByPlaceId(placeId, pageable));
         }
         if (hasUser) {
-            return ResponseEntity.ok(reviewService.findByUserId(userId));
+            return ResponseEntity.ok(reviewService.findByUserId(userId, pageable));
         }
-        return ResponseEntity.ok(reviewService.findAll());
+        return ResponseEntity.ok(reviewService.findAll(pageable));
     }
 
     @Operation(summary = "Busca uma avaliação pelo ID")
