@@ -19,6 +19,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -180,19 +183,21 @@ class ReviewServiceTest {
     @Test
     void deveListarApenasReviewsPublicadasDoLocal() {
         Review review = reviewPublicada();
-        when(reviewRepository.findByPlaceIdAndStatus("place-1", ReviewStatus.PUBLICADA))
-                .thenReturn(List.of(review));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(reviewRepository.findByPlaceIdAndStatus("place-1", ReviewStatus.PUBLICADA, pageable))
+                .thenReturn(new PageImpl<>(List.of(review)));
 
-        assertThat(reviewService.findByPlaceId("place-1")).containsExactly(review);
+        assertThat(reviewService.findByPlaceId("place-1", pageable).getContent()).containsExactly(review);
     }
 
     @Test
     void deveListarReviewsDoUsuario() {
         Review review = reviewPublicada();
-        when(reviewRepository.findByUserIdAndStatus("user-1", ReviewStatus.PUBLICADA))
-                .thenReturn(List.of(review));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(reviewRepository.findByUserIdAndStatus("user-1", ReviewStatus.PUBLICADA, pageable))
+                .thenReturn(new PageImpl<>(List.of(review)));
 
-        assertThat(reviewService.findByUserId("user-1")).containsExactly(review);
+        assertThat(reviewService.findByUserId("user-1", pageable).getContent()).containsExactly(review);
     }
 
     @Test

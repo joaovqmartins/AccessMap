@@ -11,6 +11,8 @@ import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,20 +31,20 @@ public class ReviewService {
     private final PlaceService placeService;
     private final UserService userService;
 
-    public List<Review> findAll() {
-        return reviewRepository.findByStatus(ReviewStatus.PUBLICADA);
+    public Page<Review> findAll(Pageable pageable) {
+        return reviewRepository.findByStatus(ReviewStatus.PUBLICADA, pageable);
     }
 
-    public List<Review> findByPlaceId(String placeId) {
-        return reviewRepository.findByPlaceIdAndStatus(placeId, ReviewStatus.PUBLICADA);
+    public Page<Review> findByPlaceId(String placeId, Pageable pageable) {
+        return reviewRepository.findByPlaceIdAndStatus(placeId, ReviewStatus.PUBLICADA, pageable);
     }
 
-    public List<Review> findByUserId(String userId) {
-        return reviewRepository.findByUserIdAndStatus(userId, ReviewStatus.PUBLICADA);
+    public Page<Review> findByUserId(String userId, Pageable pageable) {
+        return reviewRepository.findByUserIdAndStatus(userId, ReviewStatus.PUBLICADA, pageable);
     }
 
-    public List<Review> findByUserIdAndPlaceId(String userId, String placeId) {
-        return reviewRepository.findByUserIdAndPlaceIdAndStatus(userId, placeId, ReviewStatus.PUBLICADA);
+    public Page<Review> findByUserIdAndPlaceId(String userId, String placeId, Pageable pageable) {
+        return reviewRepository.findByUserIdAndPlaceIdAndStatus(userId, placeId, ReviewStatus.PUBLICADA, pageable);
     }
 
     public Review findById(String id) {
