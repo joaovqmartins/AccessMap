@@ -13,3 +13,4 @@ target/
 # SO
 .DS_Store
 Thumbs.db
+node_modules
