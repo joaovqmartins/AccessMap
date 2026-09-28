@@ -34,15 +34,19 @@ public class UserService {
 
     public User create(UserRequestDto request) {
         validateRequiredFields(request);
+        // E-mail é opcional: string vazia vira null, senão dois cadastros sem e-mail colidiriam no UNIQUE.
+        String email = isBlank(request.getEmail()) ? null : request.getEmail();
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone já está em uso");
+        }
+        if (email != null && userRepository.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
         }
 
-
         User user = User.builder()
                 .name(request.getName())
-                .email(request.getEmail())
+                .email(email)
                 .phone(request.getPhone())
                 .age(request.getAge())
                 .accessibilityNeeds(request.getAccessibilityNeeds())
@@ -58,6 +62,9 @@ public class UserService {
         User existing = findById(id);
         validateUpdatableFields(request);
 
+        if (request.getPhone() != null && userRepository.existsByPhoneExcludingId(request.getPhone(), id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone já está em uso");
+        }
         if (request.getEmail() != null && userRepository.existsByEmailExcludingId(request.getEmail(), id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
         }
@@ -111,19 +118,17 @@ public class UserService {
         }
     }
 
+    /** Cadastro simplificado: só telefone, senha e nome são obrigatórios; o resto se completa no perfil. */
     private void validateRequiredFields(UserRequestDto request) {
         if (isBlank(request.getName()) ||
-                isBlank(request.getEmail()) ||
                 isBlank(request.getPhone()) ||
-                request.getAge() == null ||
-                isEmpty(request.getAccessibilityNeeds()) ||
                 isBlank(request.getPassword())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Campos obrigatórios: name, email, phone, age, accessibilityNeeds, password"
+                    "Campos obrigatórios: name, phone, password"
             );
         }
-        if (request.getAge() <= 0) {
+        if (request.getAge() != null && request.getAge() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "age deve ser um número positivo");
         }
     }

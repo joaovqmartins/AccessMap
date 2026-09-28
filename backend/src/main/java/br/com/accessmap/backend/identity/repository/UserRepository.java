@@ -9,12 +9,17 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, String> {
 
+    Optional<User> findByPhone(String phone);
+
+    boolean existsByPhone(String phone);
+
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.phone = :phone AND u.id <> :excludeId")
+    boolean existsByPhoneExcludingId(String phone, String excludeId);
+
     boolean existsByEmail(String email);
-
-    Optional<User> findByEmail(String email);
-
-    boolean existsByRole(Role role);
 
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.id <> :excludeId")
     boolean existsByEmailExcludingId(String email, String excludeId);
+
+    boolean existsByRole(Role role);
 }

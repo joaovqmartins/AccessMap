@@ -48,23 +48,18 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
 
     // ---------- helpers ----------
 
-    private String emailUnico() {
-        return "user-" + UUID.randomUUID() + "@teste.com";
-    }
-
     private String json(Map<String, ?> body) {
         return objectMapper.writeValueAsString(body);
     }
 
     /** Registra pela API e devolve o corpo com tokens. */
-    private JsonNode registrar(String email) throws Exception {
+    private JsonNode registrar(String telefone) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of(
                                 "name", "Maria",
-                                "email", email,
+                                "phone", telefone,
                                 "password", SENHA,
-                                "phone", "11999999999",
                                 "age", 30,
                                 "accessibilityNeeds", new String[]{"MOBILIDADE_REDUZIDA"}))))
                 .andExpect(status().isCreated())
@@ -76,7 +71,7 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
     private String tokenDeAdmin() {
         User admin = userRepository.save(User.builder()
                 .name("Admin")
-                .email(emailUnico())
+                .phone(telefoneUnico())
                 .password(passwordEncoder.encode(SENHA))
                 .role(Role.ADMIN)
                 .accessibilityNeeds(Set.of())
@@ -94,20 +89,20 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void meDevolveOProprioUsuarioSemSenha() throws Exception {
-        String email = emailUnico();
-        JsonNode tokens = registrar(email);
+        String telefone = telefoneUnico();
+        JsonNode tokens = registrar(telefone);
 
         mockMvc.perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.phone").value(telefone))
                 .andExpect(jsonPath("$.role").value("USER"))
                 .andExpect(jsonPath("$.password").doesNotExist());
     }
 
     @Test
     void patchMeAtualizaApenasOsCamposEnviados() throws Exception {
-        String email = emailUnico();
-        JsonNode tokens = registrar(email);
+        String telefone = telefoneUnico();
+        JsonNode tokens = registrar(telefone);
 
         mockMvc.perform(patch("/api/users/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer(tokens))
@@ -115,12 +110,12 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
                         .content(json(Map.of("name", "Maria Silva"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Maria Silva"))
-                .andExpect(jsonPath("$.email").value(email));
+                .andExpect(jsonPath("$.phone").value(telefone));
     }
 
     @Test
     void trocaDeSenhaExigeSenhaAtualCorreta() throws Exception {
-        JsonNode tokens = registrar(emailUnico());
+        JsonNode tokens = registrar(telefoneUnico());
 
         mockMvc.perform(patch("/api/users/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer(tokens))
@@ -138,8 +133,8 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void trocaDeSenhaEncerraAsSessoesExistentes() throws Exception {
-        String email = emailUnico();
-        JsonNode tokens = registrar(email);
+        String telefone = telefoneUnico();
+        JsonNode tokens = registrar(telefone);
         String refreshAntigo = tokens.get("refreshToken").asString();
 
         mockMvc.perform(patch("/api/users/me")
@@ -157,13 +152,13 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
         // e a senha nova é a que vale no login
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", email, "password", "outraSenha123"))))
+                        .content(json(Map.of("phone", telefone, "password", "outraSenha123"))))
                 .andExpect(status().isOk());
     }
 
     @Test
     void deleteMeRemoveAContaEOTokenDeixaDeResolverUmUsuario() throws Exception {
-        JsonNode tokens = registrar(emailUnico());
+        JsonNode tokens = registrar(telefoneUnico());
 
         mockMvc.perform(delete("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
                 .andExpect(status().isOk());
@@ -177,8 +172,8 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void usuarioComumNaoAcessaRotasAdministrativas() throws Exception {
-        JsonNode tokens = registrar(emailUnico());
-        String outroId = registrar(emailUnico()).get("user").get("id").asString();
+        JsonNode tokens = registrar(telefoneUnico());
+        String outroId = registrar(telefoneUnico()).get("user").get("id").asString();
 
         mockMvc.perform(get("/api/users").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
                 .andExpect(status().isForbidden())
@@ -195,7 +190,7 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
     @Test
     void adminListaBuscaERemoveUsuarios() throws Exception {
         String adminToken = "Bearer " + tokenDeAdmin();
-        String alvoId = registrar(emailUnico()).get("user").get("id").asString();
+        String alvoId = registrar(telefoneUnico()).get("user").get("id").asString();
 
         mockMvc.perform(get("/api/users").header(HttpHeaders.AUTHORIZATION, adminToken))
                 .andExpect(status().isOk())
