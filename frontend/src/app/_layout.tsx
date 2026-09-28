@@ -33,6 +33,8 @@ function RootNavigator() {
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/cadastro" options={{ title: 'Cadastro' }} />
       </Stack.Protected>
+      {/* Leitura pública, como no backend */}
+      <Stack.Screen name="locais/[placeId]/index" options={{ title: 'Local' }} />
     </Stack>
   );
 }

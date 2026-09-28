@@ -2,7 +2,13 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { router } from 'expo-router';
+
 import { useAuth } from '../auth/AuthContext';
+import Button from '../components/Button';
+
+// TODO(#23): remover quando a busca pelo Google Maps fornecer o place_id real
+const EXAMPLE_PLACE = { placeId: 'ChIJN1t_tDeuEmsRUsoyG83frY4', name: 'Local de exemplo' };
 
 function initials(name: string | undefined) {
   if (!name) return '?';
@@ -64,6 +70,13 @@ export default function HomeScreen() {
       {/* 3. ÁREA DO MAPA (Centro) */}
       <View style={styles.mapContainer}>
         <Text style={styles.mapPlaceholderText}>[ COMPONENTE DE MAPA AQUI ]</Text>
+        <View style={styles.exampleButton}>
+          <Button
+            title="Ver local de exemplo"
+            variant="secondary"
+            onPress={() => router.push({ pathname: '/locais/[placeId]', params: EXAMPLE_PLACE })}
+          />
+        </View>
       </View>
 
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
@@ -155,6 +168,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB', // Cor de fundo simulando um mapa carregando
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  exampleButton: {
+    marginTop: 16,
   },
   mapPlaceholderText: {
     color: '#6B7280',
