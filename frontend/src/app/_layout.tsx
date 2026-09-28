@@ -28,6 +28,8 @@ function RootNavigator() {
     <Stack>
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="locais/[placeId]/avaliar" options={{ title: 'Avaliar local' }} />
+        <Stack.Screen name="avaliacoes/[id]/editar" options={{ title: 'Editar avaliação' }} />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
@@ -35,6 +37,8 @@ function RootNavigator() {
       </Stack.Protected>
       {/* Leitura pública, como no backend */}
       <Stack.Screen name="locais/[placeId]/index" options={{ title: 'Local' }} />
+      <Stack.Screen name="locais/[placeId]/avaliacoes" options={{ title: 'Avaliações' }} />
+      <Stack.Screen name="avaliacoes/[id]/index" options={{ title: 'Avaliação' }} />
     </Stack>
   );
 }
