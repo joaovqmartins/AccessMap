@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Cria o primeiro ADMIN a partir de ADMIN_EMAIL / ADMIN_PASSWORD, se ambos estiverem definidos
+ * Cria o primeiro ADMIN a partir de ADMIN_PHONE / ADMIN_PASSWORD, se ambos estiverem definidos
  * e ainda não existir nenhum ADMIN. Evita hash fixo em migração e senha padrão conhecida.
  */
 @Slf4j
@@ -26,28 +26,28 @@ public class AdminSeeder implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${ADMIN_EMAIL:}")
-    private String adminEmail;
+    @Value("${ADMIN_PHONE:}")
+    private String adminPhone;
 
     @Value("${ADMIN_PASSWORD:}")
     private String adminPassword;
 
     @Override
     public void run(ApplicationArguments args) {
-        if (adminEmail.isBlank() || adminPassword.isBlank()) {
+        if (adminPhone.isBlank() || adminPassword.isBlank()) {
             return;
         }
         if (userRepository.existsByRole(Role.ADMIN)) {
             return;
         }
-        if (userRepository.existsByEmail(adminEmail)) {
-            log.warn("ADMIN_EMAIL {} já está cadastrado como usuário comum; nenhum ADMIN foi criado", adminEmail);
+        if (userRepository.existsByPhone(adminPhone)) {
+            log.warn("ADMIN_PHONE {} já está cadastrado como usuário comum; nenhum ADMIN foi criado", adminPhone);
             return;
         }
 
         userRepository.save(User.builder()
                 .name("Administrador")
-                .email(adminEmail)
+                .phone(adminPhone)
                 .password(passwordEncoder.encode(adminPassword))
                 .role(Role.ADMIN)
                 .accessibilityNeeds(Set.of())
@@ -55,6 +55,6 @@ public class AdminSeeder implements ApplicationRunner {
                 .updatedAt(LocalDateTime.now())
                 .build());
 
-        log.info("Usuário ADMIN inicial criado: {}", adminEmail);
+        log.info("Usuário ADMIN inicial criado: {}", adminPhone);
     }
 }

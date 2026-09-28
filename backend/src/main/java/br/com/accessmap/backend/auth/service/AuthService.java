@@ -25,9 +25,9 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
 
     /**
-     * Hash de uma senha que ninguém tem. Quando o e-mail não existe, comparamos contra ele
-     * mesmo assim, para que login com e-mail inexistente demore o mesmo que login com senha
-     * errada — sem isso, o tempo de resposta revela quais e-mails estão cadastrados.
+     * Hash de uma senha que ninguém tem. Quando o telefone não existe, comparamos contra ele
+     * mesmo assim, para que login com telefone inexistente demore o mesmo que login com senha
+     * errada — sem isso, o tempo de resposta revela quais telefones estão cadastrados.
      */
     private final String dummyHash;
 
@@ -60,7 +60,7 @@ public class AuthService {
 
     @Transactional
     public TokenResponseDto login(LoginRequestDto request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User user = userRepository.findByPhone(request.getPhone()).orElse(null);
 
         String storedHash = user != null ? user.getPassword() : dummyHash;
         boolean matches = passwordEncoder.matches(request.getPassword(), storedHash);

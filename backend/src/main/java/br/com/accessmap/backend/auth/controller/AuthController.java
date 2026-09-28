@@ -33,14 +33,14 @@ public class AuthController {
     @Operation(summary = "Cadastra um usuário e já devolve os tokens de acesso")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Usuário criado e autenticado"),
-            @ApiResponse(responseCode = "400", description = "Campo inválido ou e-mail já em uso")
+            @ApiResponse(responseCode = "400", description = "Campo inválido, telefone ou e-mail já em uso")
     })
     @PostMapping("/register")
     public ResponseEntity<TokenResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
-    @Operation(summary = "Autentica com e-mail e senha")
+    @Operation(summary = "Autentica com telefone e senha")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tokens emitidos"),
             @ApiResponse(responseCode = "401", description = "Credenciais inválidas")

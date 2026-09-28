@@ -41,7 +41,7 @@ docker compose up -d
 export JWT_SECRET=$(openssl rand -base64 48)
 
 # 3. Opcional: primeiro usuário ADMIN, criado no boot se ainda não existir nenhum
-export ADMIN_EMAIL=admin@accessmap.local
+export ADMIN_PHONE=11999999999
 export ADMIN_PASSWORD=troque-esta-senha
 
 # 4. Sobe a API (Flyway aplica as migrações automaticamente)
