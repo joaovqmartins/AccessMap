@@ -1,7 +1,25 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useAuth } from '../auth/AuthContext';
+
+function initials(name: string | undefined) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
 
 export default function HomeScreen() {
+  const { user, signOut } = useAuth();
+
+  function handleAvatarPress() {
+    Alert.alert(user?.name ?? 'Conta', undefined, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => signOut() },
+    ]);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       
@@ -14,9 +32,14 @@ export default function HomeScreen() {
           </TouchableOpacity>
           
           {/* Imagem do Utilizador (Placeholder com iniciais) */}
-          <View style={styles.userAvatar}>
-            <Text style={styles.avatarText}>GR</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.userAvatar}
+            onPress={handleAvatarPress}
+            accessibilityRole="button"
+            accessibilityLabel={`Conta de ${user?.name ?? 'usuário'}`}
+          >
+            <Text style={styles.avatarText}>{initials(user?.name)}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Barra de Busca */}

@@ -55,6 +55,23 @@ Swagger: http://localhost:8080/swagger-ui.html — use **Authorize** com o `acce
 
 Testes (`./mvnw test`) sobem um Postgres descartável via Testcontainers; precisam do Docker rodando.
 
+## 📱 Rodando o app mobile
+
+Pré-requisitos: Node 20+, backend rodando (seção acima) e um emulador Android ou o Expo Go no celular.
+
+```bash
+cd frontend
+npm ci
+
+# URL da API: 10.0.2.2 no emulador Android, IP da sua máquina na rede se usar aparelho físico
+cp .env.example .env.local
+
+npx expo start   # pressione "a" para abrir no emulador Android
+```
+
+O app guarda o refresh token no armazenamento seguro do aparelho (`expo-secure-store`) e renova o access token automaticamente.
+O `expo start --web` não consegue falar com a API (o backend não habilita CORS); use emulador ou aparelho.
+
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
 * Gustavo Borges Hertz
