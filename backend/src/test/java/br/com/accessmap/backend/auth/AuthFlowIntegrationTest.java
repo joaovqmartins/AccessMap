@@ -42,29 +42,22 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     // ---------- helpers ----------
 
-    private String emailUnico() {
-        return "user-" + UUID.randomUUID() + "@teste.com";
-    }
-
     private String json(Map<String, ?> body) {
         return objectMapper.writeValueAsString(body);
     }
 
-    private Map<String, Object> cadastroValido(String email) {
+    private Map<String, Object> cadastroValido(String telefone) {
         return Map.of(
                 "name", "Maria",
-                "email", email,
-                "password", SENHA,
-                "phone", "11999999999",
-                "age", 30,
-                "accessibilityNeeds", new String[]{"MOBILIDADE_REDUZIDA"}
+                "phone", telefone,
+                "password", SENHA
         );
     }
 
-    private JsonNode registrar(String email) throws Exception {
+    private JsonNode registrar(String telefone) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(cadastroValido(email))))
+                        .content(json(cadastroValido(telefone))))
                 .andExpect(status().isCreated())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString());
@@ -87,7 +80,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void registroDevolveTokensESenhaNuncaAparece() throws Exception {
-        JsonNode body = registrar(emailUnico());
+        JsonNode body = registrar(telefoneUnico());
 
         assertThat(body.get("accessToken").asString()).isNotBlank();
         assertThat(body.get("refreshToken").asString()).isNotBlank();
@@ -98,15 +91,15 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void registroRejeitaEmailDuplicado() throws Exception {
-        String email = emailUnico();
-        registrar(email);
+    void registroRejeitaTelefoneDuplicado() throws Exception {
+        String telefone = telefoneUnico();
+        registrar(telefone);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(cadastroValido(email))))
+                        .content(json(cadastroValido(telefone))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem").value("E-mail já está em uso"));
+                .andExpect(jsonPath("$.mensagem").value("Telefone já está em uso"));
     }
 
     @Test
@@ -116,42 +109,42 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                         .content(json(Map.of("email", "nao-eh-email", "password", "123"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.name").exists())
+                .andExpect(jsonPath("$.campos.phone").exists())
                 .andExpect(jsonPath("$.campos.email").exists())
-                .andExpect(jsonPath("$.campos.password").exists())
-                .andExpect(jsonPath("$.campos.accessibilityNeeds").exists());
+                .andExpect(jsonPath("$.campos.password").exists());
     }
 
     // ---------- login ----------
 
     @Test
     void loginComCredenciaisCorretasEmiteTokens() throws Exception {
-        String email = emailUnico();
-        registrar(email);
+        String telefone = telefoneUnico();
+        registrar(telefone);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", email, "password", SENHA))))
+                        .content(json(Map.of("phone", telefone, "password", SENHA))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.user.email").value(email))
+                .andExpect(jsonPath("$.user.phone").value(telefone))
                 .andExpect(jsonPath("$.user.password").doesNotExist());
     }
 
     @Test
-    void loginNaoRevelaSeFoiEmailOuSenhaQueErrou() throws Exception {
-        String email = emailUnico();
-        registrar(email);
+    void loginNaoRevelaSeFoiTelefoneOuSenhaQueErrou() throws Exception {
+        String telefone = telefoneUnico();
+        registrar(telefone);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", email, "password", "senhaErrada"))))
+                        .content(json(Map.of("phone", telefone, "password", "senhaErrada"))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensagem").value("Credenciais inválidas"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", "ninguem@teste.com", "password", SENHA))))
+                        .content(json(Map.of("phone", "11000000000", "password", SENHA))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensagem").value("Credenciais inválidas"));
     }
@@ -168,7 +161,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void rotaProtegidaComTokenValidoPassa() throws Exception {
-        JsonNode body = registrar(emailUnico());
+        JsonNode body = registrar(telefoneUnico());
 
         mockMvc.perform(get("/api/users/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer(body.get("accessToken").asString())))
@@ -184,9 +177,9 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void tokenExpiradoDevolve401() throws Exception {
-        String email = emailUnico();
-        registrar(email);
-        User user = userRepository.findByEmail(email).orElseThrow();
+        String telefone = telefoneUnico();
+        registrar(telefone);
+        User user = userRepository.findByPhone(telefone).orElseThrow();
 
         // emitido há 10 min com validade de 5: expirou há 5 min, além da tolerância de 60s do validador
         String expirado = tokenService.issueAccessToken(user, Instant.now().minus(Duration.ofMinutes(10)), Duration.ofMinutes(5));
@@ -198,7 +191,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void tokenAdulteradoDevolve401() throws Exception {
-        JsonNode body = registrar(emailUnico());
+        JsonNode body = registrar(telefoneUnico());
         String token = body.get("accessToken").asString();
         String adulterado = token.substring(0, token.length() - 4) + "abcd";
 
@@ -211,7 +204,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void refreshRotacionaEInvalidaOAnterior() throws Exception {
-        JsonNode inicial = registrar(emailUnico());
+        JsonNode inicial = registrar(telefoneUnico());
         String refresh1 = inicial.get("refreshToken").asString();
 
         JsonNode segundo = refresh(refresh1, 200);
@@ -226,7 +219,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void reusoDeRefreshRevogadoDerrubaTodasAsSessoes() throws Exception {
-        JsonNode inicial = registrar(emailUnico());
+        JsonNode inicial = registrar(telefoneUnico());
         String refresh1 = inicial.get("refreshToken").asString();
 
         String refresh2 = refresh(refresh1, 200).get("refreshToken").asString();
@@ -248,7 +241,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void logoutRevogaORefreshToken() throws Exception {
-        JsonNode body = registrar(emailUnico());
+        JsonNode body = registrar(telefoneUnico());
         String refreshToken = body.get("refreshToken").asString();
 
         mockMvc.perform(post("/api/auth/logout")
@@ -261,7 +254,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void logoutEIdempotente() throws Exception {
-        JsonNode body = registrar(emailUnico());
+        JsonNode body = registrar(telefoneUnico());
         String refreshToken = body.get("refreshToken").asString();
 
         for (int i = 0; i < 2; i++) {

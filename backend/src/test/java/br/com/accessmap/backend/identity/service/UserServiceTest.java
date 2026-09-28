@@ -61,6 +61,7 @@ class UserServiceTest {
 
     @Test
     void deveCriarUsuarioComDadosValidos() {
+        when(userRepository.existsByPhone(anyString())).thenReturn(false);
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -83,9 +84,9 @@ class UserServiceTest {
     }
 
     @Test
-    void deveRejeitarCriacaoSemNecessidadeDeAcessibilidade() {
+    void deveRejeitarCriacaoSemTelefone() {
         UserRequestDto dto = validRequest();
-        dto.setAccessibilityNeeds(Set.of());
+        dto.setPhone(null);
 
         assertThrows(ResponseStatusException.class, () -> userService.create(dto));
         verify(userRepository, never()).save(any());
@@ -102,9 +103,49 @@ class UserServiceTest {
 
     @Test
     void deveRejeitarCriacaoComEmailJaCadastrado() {
+        when(userRepository.existsByPhone("11999999999")).thenReturn(false);
         when(userRepository.existsByEmail("maria@email.com")).thenReturn(true);
 
         assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarCriacaoComTelefoneJaCadastrado() {
+        when(userRepository.existsByPhone("11999999999")).thenReturn(true);
+
+        assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void devePermitirCadastroSoComTelefoneSenhaENome() {
+        when(userRepository.existsByPhone("11999999999")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setName("Maria");
+        dto.setPhone("11999999999");
+        dto.setPassword("senha1234");
+        dto.setEmail("");
+
+        User criado = userService.create(dto);
+
+        assertThat(criado.getEmail()).isNull();
+        assertThat(criado.getAge()).isNull();
+        verify(userRepository, never()).existsByEmail(anyString());
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoParaTelefoneJaUsadoPorOutroUsuario() {
+        User existente = User.builder().id("1").phone("11988887777").build();
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
+        when(userRepository.existsByPhoneExcludingId("11977776666", "1")).thenReturn(true);
+
+        UserRequestDto dto = new UserRequestDto();
+        dto.setPhone("11977776666");
+
+        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
         verify(userRepository, never()).save(any());
     }
 

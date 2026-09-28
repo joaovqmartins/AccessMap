@@ -6,6 +6,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Base para testes que sobem o contexto completo contra um Postgres descartável.
  * <p>
@@ -24,5 +26,12 @@ public abstract class AbstractIntegrationTest {
 
     static {
         POSTGRES.start();
+    }
+
+    private static final AtomicLong SEQUENCIA_TELEFONE = new AtomicLong(System.nanoTime() % 100_000_000L);
+
+    /** Telefone válido (11 dígitos) e único na JVM: o banco é compartilhado entre as classes e o telefone é UNIQUE. */
+    protected static String telefoneUnico() {
+        return String.format("119%08d", SEQUENCIA_TELEFONE.incrementAndGet() % 100_000_000L);
     }
 }

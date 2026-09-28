@@ -61,7 +61,7 @@ class ReviewAccessIntegrationTest extends AbstractIntegrationTest {
     private User criarUsuario(Role role) {
         return userRepository.save(User.builder()
                 .name("Pessoa")
-                .email("user-" + UUID.randomUUID() + "@teste.com")
+                .phone(telefoneUnico())
                 .password(passwordEncoder.encode("senhaForte123"))
                 .role(role)
                 .accessibilityNeeds(Set.of())
