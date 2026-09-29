@@ -1,4 +1,4 @@
-import { Stack, useFocusEffect } from 'expo-router';
+import { Link, Stack, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -12,7 +12,7 @@ import ReviewCard from '../components/ReviewCard';
 import StarRating from '../components/StarRating';
 import TagStatsBar from '../components/TagStatsBar';
 import { ALL_TAGS } from '../constants/labels';
-import { colors, spacing } from '../constants/theme';
+import { MIN_TOUCH, colors, spacing } from '../constants/theme';
 
 const PREVIEW_SIZE = 3;
 
@@ -26,6 +26,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
   const { user } = useAuth();
   const [place, setPlace] = useState<Place | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [myReview, setMyReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,19 +34,22 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [placeData, page] = await Promise.all([
+      const [placeData, page, mine] = await Promise.all([
         placesApi.get(placeId),
         reviewsApi.list({ placeId, size: PREVIEW_SIZE }),
+        // O backend aceita uma avaliação por usuário e local: se já existir, o CTA leva até ela
+        user ? reviewsApi.findMine(placeId, user.id) : Promise.resolve(null),
       ]);
       setPlace(placeData);
       setReviews(page.content);
+      setMyReview(mine);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível carregar o local');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [placeId]);
+  }, [placeId, user]);
 
   // Recarrega ao voltar para a tela (ex.: depois de criar ou editar uma avaliação)
   useFocusEffect(
@@ -108,6 +112,23 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
             )}
           </View>
 
+          <View style={styles.cta}>
+            {!user ? (
+              <Button title="Entrar para avaliar" onPress={() => router.push('/login')} />
+            ) : myReview ? (
+              <Button
+                title="Ver minha avaliação"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/avaliacoes/[id]', params: { id: myReview.id } })}
+              />
+            ) : (
+              <Button
+                title="Avaliar este local"
+                onPress={() => router.push({ pathname: '/locais/[placeId]/avaliar', params: { placeId } })}
+              />
+            )}
+          </View>
+
           {tagsWithStats.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle} accessibilityRole="header">Acessibilidade por característica</Text>
@@ -121,8 +142,22 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle} accessibilityRole="header">Avaliações recentes</Text>
               {reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} isMine={review.userId === user?.id} />
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  isMine={review.userId === user?.id}
+                  onPress={() => router.push({ pathname: '/avaliacoes/[id]', params: { id: review.id } })}
+                />
               ))}
+              {(place?.reviewCount ?? 0) > reviews.length && (
+                <Link
+                  href={{ pathname: '/locais/[placeId]/avaliacoes', params: { placeId } }}
+                  style={styles.link}
+                  accessibilityRole="link"
+                >
+                  Ver todas as {place!.reviewCount} avaliações
+                </Link>
+              )}
             </View>
           )}
         </>
@@ -146,4 +181,13 @@ const styles = StyleSheet.create({
   score: { fontSize: 40, fontWeight: 'bold', color: colors.text, marginRight: spacing.md },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   muted: { fontSize: 14, color: colors.textMuted },
+  cta: { marginBottom: spacing.md },
+  link: {
+    minHeight: MIN_TOUCH,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });

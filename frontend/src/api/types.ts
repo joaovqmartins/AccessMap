@@ -78,7 +78,7 @@ export interface Review {
   placeId: string;
   rating: number;
   comment: string | null;
-  tags: Partial<Record<AccessibilityTag, TagAssessment>>;
+  tags: ReviewTags;
   reviewerNeeds: AccessibilityNeed[] | null;
   status: ReviewStatus;
   createdAt: string;
@@ -94,4 +94,25 @@ export interface Paged<T> {
     totalElements: number;
     totalPages: number;
   };
+}
+
+export type ReviewTags = Partial<Record<AccessibilityTag, TagAssessment>>;
+
+export interface ReviewRequest {
+  placeId: string;
+  rating: number;
+  comment?: string;
+  tags: ReviewTags;
+}
+
+/** PATCH: campos ausentes não mudam; `tags`, se enviado, substitui o mapa inteiro. */
+export type ReviewUpdateRequest = Partial<Pick<ReviewRequest, 'rating' | 'comment' | 'tags'>>;
+
+/** PATCH /api/users/me: campos ausentes não mudam; o backend não aceita esvaziar um campo. */
+export interface UserUpdateRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  age?: number;
+  accessibilityNeeds?: AccessibilityNeed[];
 }

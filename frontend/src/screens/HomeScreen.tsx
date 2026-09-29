@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
@@ -17,14 +17,7 @@ function initials(name: string | undefined) {
 }
 
 export default function HomeScreen() {
-  const { user, signOut } = useAuth();
-
-  function handleAvatarPress() {
-    Alert.alert(user?.name ?? 'Conta', undefined, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => signOut() },
-    ]);
-  }
+  const { user } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -40,9 +33,9 @@ export default function HomeScreen() {
           {/* Imagem do Utilizador (Placeholder com iniciais) */}
           <TouchableOpacity
             style={styles.userAvatar}
-            onPress={handleAvatarPress}
+            onPress={() => router.push('/perfil')}
             accessibilityRole="button"
-            accessibilityLabel={`Conta de ${user?.name ?? 'usuário'}`}
+            accessibilityLabel="Meu perfil"
           >
             <Text style={styles.avatarText}>{initials(user?.name)}</Text>
           </TouchableOpacity>
