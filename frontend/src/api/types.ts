@@ -107,3 +107,12 @@ export interface ReviewRequest {
 
 /** PATCH: campos ausentes não mudam; `tags`, se enviado, substitui o mapa inteiro. */
 export type ReviewUpdateRequest = Partial<Pick<ReviewRequest, 'rating' | 'comment' | 'tags'>>;
+
+/** PATCH /api/users/me: campos ausentes não mudam; o backend não aceita esvaziar um campo. */
+export interface UserUpdateRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  age?: number;
+  accessibilityNeeds?: AccessibilityNeed[];
+}

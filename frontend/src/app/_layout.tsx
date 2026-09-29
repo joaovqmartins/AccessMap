@@ -28,6 +28,7 @@ function RootNavigator() {
     <Stack>
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
         <Stack.Screen name="locais/[placeId]/avaliar" options={{ title: 'Avaliar local' }} />
         <Stack.Screen name="avaliacoes/[id]/editar" options={{ title: 'Editar avaliação' }} />
       </Stack.Protected>

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { authApi } from '../api/auth';
 import { onSessionExpired, refreshSession, saveTokens } from '../api/client';
+import { usersApi } from '../api/users';
 import type { LoginRequest, RegisterRequest, User } from '../api/types';
 import { tokenStorage } from './tokenStorage';
 
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [reset]);
 
   const refreshUser = useCallback(async (updated?: User) => {
-    setUser(updated ?? (await authApi.me()));
+    setUser(updated ?? (await usersApi.me()));
   }, []);
 
   const value = useMemo(
