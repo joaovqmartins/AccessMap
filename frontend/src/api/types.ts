@@ -42,6 +42,49 @@ export interface RegisterRequest {
   accessibilityNeeds?: AccessibilityNeed[];
 }
 
+export type AccessibilityTag =
+  | 'RAMPAS_E_ENTRADAS'
+  | 'ELEVADORES'
+  | 'BANHEIROS_ADAPTADOS'
+  | 'VAGAS_ESTACIONAMENTO'
+  | 'SINALIZACAO'
+  | 'ESPACO_CIRCULACAO'
+  | 'ATENDIMENTO'
+  | 'OUTROS';
+
+export type TagAssessment = 'ADEQUADO' | 'INADEQUADO' | 'INEXISTENTE';
+
+export type ReviewStatus = 'PUBLICADA' | 'OCULTA' | 'REMOVIDA';
+
+export interface TagStats {
+  adequadoCount: number;
+  inadequadoCount: number;
+  inexistenteCount: number;
+}
+
+export interface Place {
+  id: string;
+  placeId: string;
+  averageScore: number;
+  reviewCount: number;
+  tagStats: Partial<Record<AccessibilityTag, TagStats>>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  placeId: string;
+  rating: number;
+  comment: string | null;
+  tags: ReviewTags;
+  reviewerNeeds: AccessibilityNeed[] | null;
+  status: ReviewStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Formato de Page serializado como PagedModel pelo backend
 export interface Paged<T> {
   content: T[];
@@ -51,4 +94,25 @@ export interface Paged<T> {
     totalElements: number;
     totalPages: number;
   };
+}
+
+export type ReviewTags = Partial<Record<AccessibilityTag, TagAssessment>>;
+
+export interface ReviewRequest {
+  placeId: string;
+  rating: number;
+  comment?: string;
+  tags: ReviewTags;
+}
+
+/** PATCH: campos ausentes não mudam; `tags`, se enviado, substitui o mapa inteiro. */
+export type ReviewUpdateRequest = Partial<Pick<ReviewRequest, 'rating' | 'comment' | 'tags'>>;
+
+/** PATCH /api/users/me: campos ausentes não mudam; o backend não aceita esvaziar um campo. */
+export interface UserUpdateRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  age?: number;
+  accessibilityNeeds?: AccessibilityNeed[];
 }
