@@ -5,12 +5,15 @@ import br.com.accessmap.backend.place.model.TagStats;
 import br.com.accessmap.backend.place.repository.PlaceRepository;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,14 @@ public class PlaceService {
     public Place findByPlaceId(String placeId) {
         return placeRepository.findByPlaceId(placeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
+    }
+
+    /** Sem tags, lista todos os locais; com tags, só os que têm todas elas (ver {@link PlaceRepository#findByAllTagsAdequate}). */
+    public Page<Place> search(Set<AccessibilityTag> tags, Pageable pageable) {
+        if (tags == null || tags.isEmpty()) {
+            return placeRepository.findAll(pageable);
+        }
+        return placeRepository.findByAllTagsAdequate(tags, tags.size(), pageable);
     }
 
     public Place findOrCreateByPlaceId(String placeId) {
