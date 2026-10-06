@@ -11,6 +11,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +39,10 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         Class<?> tipo = ex.getRequiredType();
+        if (tipo != null && Collection.class.isAssignableFrom(tipo)) {
+            // parâmetro como Set<Enum>: o tipo que importa é o do elemento, não o da coleção
+            tipo = ex.getParameter().nested().getNestedParameterType();
+        }
         String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue();
         if (tipo != null && tipo.isEnum()) {
             mensagem += ". Valores aceitos: " + Arrays.toString(tipo.getEnumConstants());
