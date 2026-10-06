@@ -7,8 +7,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +31,20 @@ public class ApiExceptionHandler {
                 "status", 400,
                 "mensagem", "Erro de validação",
                 "campos", campos
+        ));
+    }
+
+    // Parâmetro de URL com valor inválido (ex: ?tags=BANANA) é erro do cliente, não 500
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        Class<?> tipo = ex.getRequiredType();
+        String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue();
+        if (tipo != null && tipo.isEnum()) {
+            mensagem += ". Valores aceitos: " + Arrays.toString(tipo.getEnumConstants());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", 400,
+                "mensagem", mensagem
         ));
     }
 
