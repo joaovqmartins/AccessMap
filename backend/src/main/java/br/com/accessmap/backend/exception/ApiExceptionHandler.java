@@ -1,7 +1,9 @@
 package br.com.accessmap.backend.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -46,6 +48,23 @@ public class ApiExceptionHandler {
         String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue();
         if (tipo != null && tipo.isEnum()) {
             mensagem += ". Valores aceitos: " + Arrays.toString(tipo.getEnumConstants());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", 400,
+                "mensagem", mensagem
+        ));
+    }
+
+    // Corpo JSON ilegível (sintaxe quebrada ou valor de enum inexistente) é erro do cliente, não 500
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        String mensagem = "Corpo da requisição inválido";
+        if (ex.getCause() instanceof InvalidFormatException formato) {
+            Class<?> tipo = formato.getTargetType();
+            mensagem += ": valor '" + formato.getValue() + "' não é válido";
+            if (tipo != null && tipo.isEnum()) {
+                mensagem += ". Valores aceitos: " + Arrays.toString(tipo.getEnumConstants());
+            }
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "status", 400,

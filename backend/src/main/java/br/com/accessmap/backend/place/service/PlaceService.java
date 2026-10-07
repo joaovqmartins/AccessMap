@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.place.service;
 
+import br.com.accessmap.backend.place.dto.PlaceSummaryDto;
 import br.com.accessmap.backend.place.model.Place;
 import br.com.accessmap.backend.place.model.TagStats;
 import br.com.accessmap.backend.place.repository.PlaceRepository;
@@ -12,8 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,31 @@ public class PlaceService {
             return placeRepository.findAll(pageable);
         }
         return placeRepository.findByAllTagsAdequate(tags, tags.size(), pageable);
+    }
+
+    /**
+     * Agregados de vários locais numa chamada só, na mesma ordem de {@code placeIds} (o mobile manda ordenado
+     * por distância). Sem tags, local sem avaliação volta zerado; com tags, só voltam os que passam no filtro.
+     */
+    public List<PlaceSummaryDto> findBatch(List<String> placeIds, Set<AccessibilityTag> tags) {
+        List<String> ordem = placeIds.stream().distinct().toList();
+        boolean filtrar = tags != null && !tags.isEmpty();
+
+        Map<String, Place> conhecidos = (filtrar
+                ? placeRepository.findByPlaceIdInAndAllTagsAdequate(ordem, tags, tags.size())
+                : placeRepository.findByPlaceIdIn(ordem))
+                .stream().collect(Collectors.toMap(Place::getPlaceId, Function.identity()));
+
+        return ordem.stream()
+                .map(id -> {
+                    Place place = conhecidos.get(id);
+                    if (place != null) {
+                        return PlaceSummaryDto.from(place);
+                    }
+                    return filtrar ? null : PlaceSummaryDto.semAvaliacoes(id);
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public Place findOrCreateByPlaceId(String placeId) {

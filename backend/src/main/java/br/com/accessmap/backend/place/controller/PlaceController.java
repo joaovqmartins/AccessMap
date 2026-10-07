@@ -1,5 +1,7 @@
 package br.com.accessmap.backend.place.controller;
 
+import br.com.accessmap.backend.place.dto.PlaceBatchRequestDto;
+import br.com.accessmap.backend.place.dto.PlaceSummaryDto;
 import br.com.accessmap.backend.place.model.Place;
 import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
@@ -8,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +19,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Set;
 
 @Tag(name = "Locais", description = "Consulta de locais avaliados: cache de agregados sobre o Google Place ID")
@@ -45,6 +51,20 @@ public class PlaceController {
             @PageableDefault(size = 20, sort = {"averageScore", "reviewCount"}, direction = Sort.Direction.DESC)
             Pageable pageable) {
         return ResponseEntity.ok(placeService.search(tags, pageable));
+    }
+
+    @Operation(summary = "Agregados de vários locais numa chamada só",
+            description = "Recebe os `placeId`s que o app já obteve do Google (ordenados por distância) e devolve "
+                    + "nota média, total de avaliações e estatísticas por característica de cada um, **na mesma ordem**. "
+                    + "Local que ninguém avaliou ainda volta zerado, sem 404. Com `tags`, só voltam os locais que têm "
+                    + "todas elas (mesma regra de `GET /api/places`). Máximo de 60 `placeId`s.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resumo de cada local, na ordem pedida"),
+            @ApiResponse(responseCode = "400", description = "Lista vazia, com mais de 60 itens, ou tag inexistente")
+    })
+    @PostMapping("/batch")
+    public ResponseEntity<List<PlaceSummaryDto>> batch(@Valid @RequestBody PlaceBatchRequestDto request) {
+        return ResponseEntity.ok(placeService.findBatch(request.getPlaceIds(), request.getTags()));
     }
 
     @Operation(summary = "Busca um local pelo Google Place ID, com a nota média e o total de avaliações")
