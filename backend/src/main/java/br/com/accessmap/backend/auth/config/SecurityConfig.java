@@ -32,6 +32,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/places/**", "/api/reviews/**").permitAll()
+                        // consulta em lote: é leitura, só usa POST porque a lista de IDs não cabe na URL
+                        .requestMatchers(HttpMethod.POST, "/api/places/batch").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
