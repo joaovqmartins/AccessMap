@@ -10,6 +10,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumMap;
@@ -197,5 +201,43 @@ class PlaceServiceTest {
         List<PlaceSummaryDto> resultado = placeService.findBatch(List.of("passa", "reprova", "novo"), tags);
 
         assertThat(resultado).extracting(PlaceSummaryDto::placeId).containsExactly("passa");
+    }
+
+    // ---------- search ----------
+
+    @Test
+    void searchSemTagsDeveListarTudoSemUsarAConsultaComFiltro() {
+        Pageable pagina = PageRequest.of(0, 20);
+        Page<Place> todos = new PageImpl<>(List.of(local("a", 4.0, 2)));
+        when(placeRepository.findAll(pagina)).thenReturn(todos);
+
+        assertThat(placeService.search(null, pagina)).isSameAs(todos);
+        assertThat(placeService.search(Set.of(), pagina)).isSameAs(todos);
+
+        verify(placeRepository, never()).findByAllTagsAdequate(any(), anyLong(), any());
+    }
+
+    @Test
+    void searchComVariasTagsDeveRepassarOConjuntoEOTotalPedido() {
+        Pageable pagina = PageRequest.of(0, 20);
+        Set<AccessibilityTag> tags = Set.of(AccessibilityTag.RAMPAS_E_ENTRADAS, AccessibilityTag.ELEVADORES);
+        Page<Place> filtrados = new PageImpl<>(List.of(local("a", 4.0, 2)));
+        when(placeRepository.findByAllTagsAdequate(tags, 2L, pagina)).thenReturn(filtrados);
+
+        assertThat(placeService.search(tags, pagina)).isSameAs(filtrados);
+
+        verify(placeRepository, never()).findAll(any(Pageable.class));
+    }
+
+    @Test
+    void searchSemResultadoDeveDevolverPaginaVazia() {
+        Pageable pagina = PageRequest.of(0, 20);
+        Set<AccessibilityTag> tags = Set.of(AccessibilityTag.ELEVADORES);
+        when(placeRepository.findByAllTagsAdequate(tags, 1L, pagina)).thenReturn(Page.empty(pagina));
+
+        Page<Place> resultado = placeService.search(tags, pagina);
+
+        assertThat(resultado.getContent()).isEmpty();
+        assertThat(resultado.getTotalElements()).isZero();
     }
 }
