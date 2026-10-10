@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.place.service;
 
+import br.com.accessmap.backend.identity.service.UserService;
 import br.com.accessmap.backend.place.dto.PlaceSummaryDto;
 import br.com.accessmap.backend.place.model.Place;
 import br.com.accessmap.backend.place.model.TagStats;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,10 +27,30 @@ import java.util.stream.Collectors;
 public class PlaceService {
 
     private final PlaceRepository placeRepository;
+    private final UserService userService;
 
     public Place findByPlaceId(String placeId) {
         return placeRepository.findByPlaceId(placeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
+    }
+
+    /**
+     * Tags que a busca vai exigir: as escolhidas na hora ({@code tags}) mais, se {@code useMyNeeds}, as essenciais
+     * para as necessidades cadastradas no perfil (ver {@link NeedTagMapping}). Sem login não há perfil: 401.
+     */
+    public Set<AccessibilityTag> effectiveTags(Set<AccessibilityTag> tags, boolean useMyNeeds, String userId) {
+        Set<AccessibilityTag> efetivas = EnumSet.noneOf(AccessibilityTag.class);
+        if (tags != null) {
+            efetivas.addAll(tags);
+        }
+        if (useMyNeeds) {
+            if (userId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                        "Faça login para buscar pelas suas necessidades de acessibilidade");
+            }
+            efetivas.addAll(NeedTagMapping.tagsFor(userService.findById(userId).getAccessibilityNeeds()));
+        }
+        return efetivas;
     }
 
     /** Sem tags, lista todos os locais; com tags, só os que têm todas elas (ver {@link PlaceRepository#findByAllTagsAdequate}). */

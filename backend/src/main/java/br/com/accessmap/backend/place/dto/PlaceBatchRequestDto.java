@@ -20,4 +20,7 @@ public class PlaceBatchRequestDto {
 
     /** Opcional: se vier, só voltam os locais que têm todas essas características. */
     private Set<AccessibilityTag> tags;
+
+    /** Opcional: soma às {@code tags} as essenciais para as necessidades do usuário logado. Exige login. */
+    private boolean useMyNeeds;
 }
