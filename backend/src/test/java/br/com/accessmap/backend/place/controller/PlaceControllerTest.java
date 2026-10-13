@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -52,7 +53,8 @@ class PlaceControllerTest {
     void montarMockMvc() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
-                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver(),
+                        new AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
@@ -77,14 +79,15 @@ class PlaceControllerTest {
 
     @Test
     void tagsSeparadasPorVirgulaChegamAoServicoComoConjunto() throws Exception {
+        Set<AccessibilityTag> pedidas = Set.of(AccessibilityTag.ELEVADORES, AccessibilityTag.RAMPAS_E_ENTRADAS);
         Page<Place> vazia = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(placeService.effectiveTags(pedidas, false, null)).thenReturn(pedidas);
         when(placeService.search(any(), any(Pageable.class))).thenReturn(vazia);
 
         mockMvc.perform(get("/api/places?tags=ELEVADORES,RAMPAS_E_ENTRADAS"))
                 .andExpect(status().isOk());
 
-        verify(placeService).search(
-                eq(Set.of(AccessibilityTag.ELEVADORES, AccessibilityTag.RAMPAS_E_ENTRADAS)), any(Pageable.class));
+        verify(placeService).search(eq(pedidas), any(Pageable.class));
     }
 
     @Test

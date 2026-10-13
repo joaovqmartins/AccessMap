@@ -1,5 +1,8 @@
 package br.com.accessmap.backend.place.service;
 
+import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
+import br.com.accessmap.backend.identity.model.User;
+import br.com.accessmap.backend.identity.service.UserService;
 import br.com.accessmap.backend.place.dto.PlaceSummaryDto;
 import br.com.accessmap.backend.place.model.Place;
 import br.com.accessmap.backend.place.model.TagStats;
@@ -14,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumMap;
@@ -28,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +40,9 @@ class PlaceServiceTest {
 
     @Mock
     private PlaceRepository placeRepository;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private PlaceService placeService;
@@ -239,5 +247,53 @@ class PlaceServiceTest {
 
         assertThat(resultado.getContent()).isEmpty();
         assertThat(resultado.getTotalElements()).isZero();
+    }
+
+    // ---------- effectiveTags ----------
+
+    private void usuarioCom(AccessibilityNeed... needs) {
+        when(userService.findById("u1")).thenReturn(User.builder().id("u1").accessibilityNeeds(Set.of(needs)).build());
+    }
+
+    @Test
+    void effectiveTagsSemUseMyNeedsDevolveSoAsPedidasSemConsultarOUsuario() {
+        assertThat(placeService.effectiveTags(Set.of(AccessibilityTag.ELEVADORES), false, "u1"))
+                .containsExactly(AccessibilityTag.ELEVADORES);
+        assertThat(placeService.effectiveTags(null, false, null)).isEmpty();
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void effectiveTagsComUseMyNeedsUsaAsTagsDasNecessidadesDoPerfil() {
+        usuarioCom(AccessibilityNeed.MOBILIDADE_REDUZIDA);
+
+        assertThat(placeService.effectiveTags(null, true, "u1"))
+                .containsExactlyInAnyOrder(AccessibilityTag.RAMPAS_E_ENTRADAS, AccessibilityTag.BANHEIROS_ADAPTADOS);
+    }
+
+    @Test
+    void effectiveTagsSomaAsPedidasComAsDasNecessidades() {
+        usuarioCom(AccessibilityNeed.MOBILIDADE_REDUZIDA);
+
+        assertThat(placeService.effectiveTags(Set.of(AccessibilityTag.ELEVADORES, AccessibilityTag.RAMPAS_E_ENTRADAS), true, "u1"))
+                .containsExactlyInAnyOrder(AccessibilityTag.ELEVADORES, AccessibilityTag.RAMPAS_E_ENTRADAS,
+                        AccessibilityTag.BANHEIROS_ADAPTADOS);
+    }
+
+    @Test
+    void effectiveTagsDeUsuarioSoComOutrosNaoAcrescentaNada() {
+        usuarioCom(AccessibilityNeed.OUTROS);
+
+        assertThat(placeService.effectiveTags(null, true, "u1")).isEmpty();
+    }
+
+    @Test
+    void effectiveTagsComUseMyNeedsSemLoginDevolve401() {
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> placeService.effectiveTags(null, true, null));
+
+        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        verifyNoInteractions(userService);
     }
 }
