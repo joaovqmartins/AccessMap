@@ -6,6 +6,7 @@ import type { AccessibilityNeed, User, UserUpdateRequest } from '../api/types';
 import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
+import ChangePasswordForm from '../components/ChangePasswordForm';
 import ErrorMessage from '../components/ErrorMessage';
 import NeedsSelector from '../components/NeedsSelector';
 import TextField from '../components/TextField';
@@ -35,7 +36,7 @@ function toForm(user: User): Form {
 
 export default function ProfileScreen() {
   const { user, refreshUser, signOut } = useAuth();
-  const [editing, setEditing] = useState(false);
+  const [mode, setMode] = useState<'view' | 'editing' | 'password'>('view');
   const [form, setForm] = useState<Form | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -49,7 +50,12 @@ export default function ProfileScreen() {
     setErrors({});
     setFormError(null);
     setSuccess(null);
-    setEditing(true);
+    setMode('editing');
+  }
+
+  function startChangingPassword() {
+    setSuccess(null);
+    setMode('password');
   }
 
   function set<K extends keyof Form>(key: K, value: Form[K]) {
@@ -85,7 +91,7 @@ export default function ProfileScreen() {
 
     const changes = diff(user, form);
     if (!Object.keys(changes).length) {
-      setEditing(false);
+      setMode('view');
       return;
     }
 
@@ -93,7 +99,7 @@ export default function ProfileScreen() {
     try {
       const updated = await usersApi.updateMe(changes);
       await refreshUser(updated);
-      setEditing(false);
+      setMode('view');
       setSuccess('Perfil atualizado');
     } catch (e) {
       if (e instanceof ApiError) {
@@ -110,7 +116,12 @@ export default function ProfileScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {editing && form ? (
+        {mode === 'password' ? (
+          <View style={styles.section}>
+            <Text style={styles.name} accessibilityRole="header">Alterar senha</Text>
+            <ChangePasswordForm onCancel={() => setMode('view')} onChanged={signOut} />
+          </View>
+        ) : mode === 'editing' && form ? (
           <View style={styles.section}>
             <ErrorMessage message={formError} />
             <TextField label="Nome" value={form.name} onChangeText={(v) => set('name', v)} autoComplete="name" error={errors.name} />
@@ -145,7 +156,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.actions}>
               <Button title="Salvar" onPress={handleSave} loading={saving} />
-              <Button title="Cancelar" variant="secondary" onPress={() => setEditing(false)} disabled={saving} />
+              <Button title="Cancelar" variant="secondary" onPress={() => setMode('view')} disabled={saving} />
             </View>
           </View>
         ) : (
@@ -176,6 +187,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.actions}>
               <Button title="Editar perfil" onPress={startEditing} />
+              <Button title="Alterar senha" variant="secondary" onPress={startChangingPassword} />
               <Button title="Sair da conta" variant="secondary" onPress={signOut} />
             </View>
           </>

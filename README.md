@@ -99,6 +99,16 @@ npx expo start   # pressione "a" para abrir no emulador Android
 O app guarda o refresh token no armazenamento seguro do aparelho (`expo-secure-store`) e renova o access token automaticamente.
 Para rodar no navegador, use o serviço `web` do Docker (seção acima): ele já sobe com a API configurada para aceitar CORS de `http://localhost:8081`.
 
+Antes de abrir um PR do app:
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # ESLint (eslint-config-expo)
+npx expo-doctor     # versões compatíveis com o SDK
+```
+
+As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
+
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
 * Gustavo Borges Hertz
