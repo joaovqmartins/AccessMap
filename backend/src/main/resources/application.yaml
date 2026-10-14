@@ -1,4 +1,9 @@
 spring:
+  docker:
+    compose:
+      # Ao rodar pela IDE, sobe o Postgres do docker-compose.yml e mantem no ar ao parar a API.
+      file: ../docker-compose.yml
+      lifecycle-management: start-only
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/accessmap}
     username: ${DB_USERNAME:postgres}
@@ -20,3 +25,12 @@ accessmap:
   cors:
     # Vazio desliga o CORS. So para o app no navegador em desenvolvimento.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+
+---
+# Le o .env da raiz (rodando de backend/ ou da raiz). Variaveis de ambiente reais tem prioridade.
+# Fora do perfil de teste: os testes nao podem depender do .env de quem esta rodando.
+spring:
+  config:
+    activate:
+      on-profile: "!test"
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
