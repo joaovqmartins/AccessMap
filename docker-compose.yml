@@ -1,3 +1,5 @@
+# Apenas infraestrutura (bancos, cache, filas). A aplicacao roda pela IDE:
+# backend pelo Run do IntelliJ (que sobe este compose sozinho) e front pelo VS Code.
 services:
   postgres:
     image: postgres:16
@@ -15,50 +17,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
-  # API Spring Boot. Variaveis lidas do .env da raiz (veja .env.example).
-  api:
-    build: ./backend
-    container_name: accessmap-api
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DB_URL: jdbc:postgresql://postgres:5432/accessmap
-      DB_USERNAME: postgres
-      DB_PASSWORD: accessmap123
-      JWT_SECRET: ${JWT_SECRET:-}
-      ADMIN_PHONE: ${ADMIN_PHONE:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081}
-    ports:
-      - "8080:8080"
-
-  # App Expo rodando no navegador (expo start --web) em http://localhost:8081.
-  # Suba com --watch para a recarga automatica: o Docker no Windows nao repassa eventos
-  # de arquivo de bind mount para o container, entao o Compose Watch copia cada mudanca.
-  # Emulador e Expo Go continuam rodando fora do Docker (veja o README).
-  web:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: accessmap-web
-    environment:
-      # O navegador roda na sua maquina, entao a API e localhost (nao o nome do servico).
-      EXPO_PUBLIC_API_URL: http://localhost:8080
-    ports:
-      - "8081:8081"
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend
-          target: /app
-          ignore:
-            - node_modules/
-            - .expo/
-            - .env.local
-        - action: rebuild
-          path: ./frontend/package-lock.json
 
 volumes:
   pgdata:
