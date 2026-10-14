@@ -115,4 +115,7 @@ export interface UserUpdateRequest {
   phone?: string;
   age?: number;
   accessibilityNeeds?: AccessibilityNeed[];
+  /** Troca de senha: o backend exige as duas juntas e encerra todas as sessões. */
+  password?: string;
+  currentPassword?: string;
 }
