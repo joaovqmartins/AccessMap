@@ -13,20 +13,24 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JsonAuthenticationEntryPoint authenticationEntryPoint,
-                                                   JsonAccessDeniedHandler accessDeniedHandler) throws Exception {
+                                                   JsonAccessDeniedHandler accessDeniedHandler,
+                                                   CorsProperties corsProperties) throws Exception {
         http
                 // API stateless com bearer token: sem cookie de sessão, CSRF não se aplica.
-                // Sem CORS: app mobile faz requisição HTTP direta, não passa pelo navegador.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -44,7 +48,30 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler));
 
+        // App mobile faz requisição HTTP direta, sem CORS. Só o app rodando no navegador
+        // (expo start --web, em desenvolvimento) precisa, e só quando CORS_ALLOWED_ORIGINS é definido.
+        if (corsProperties.allowedOrigins().isEmpty()) {
+            http.cors(cors -> cors.disable());
+        } else {
+            http.cors(cors -> cors.configurationSource(corsConfigurationSource(corsProperties.allowedOrigins())));
+        }
+
         return http.build();
+    }
+
+    private static UrlBasedCorsConfigurationSource corsConfigurationSource(List<String> allowedOrigins) {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setExposedHeaders(List.of("WWW-Authenticate"));
+        // Bearer vai no header, não em cookie: credenciais de CORS ficam desligadas.
+        config.setAllowCredentials(false);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     /** Mapeia a claim "roles" do token para authorities ROLE_*, o que habilita hasRole("ADMIN"). */
