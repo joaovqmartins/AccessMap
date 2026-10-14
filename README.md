@@ -29,13 +29,40 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 * Git & GitHub Actions
 * Deploy contínuo na plataforma Railway
 
-## ▶️ Rodando o backend localmente
+## 🐳 Rodando tudo com Docker
+
+Pré-requisito: Docker. Java, Maven e Node não precisam estar instalados.
+
+```bash
+# 1. Variáveis de ambiente: copie e preencha o JWT_SECRET (openssl rand -base64 48)
+cp .env.example .env
+
+# 2. Sobe banco, API e o app no navegador, com recarga automática do app
+docker compose up --build --watch
+```
+
+O `--watch` deixa o terminal mostrando os logs; `Ctrl+C` para tudo. Para rodar em segundo plano sem recarga automática do app, use `docker compose up -d --build`.
+
+| Serviço | Endereço | O que é |
+|---|---|---|
+| `postgres` | `localhost:5432` | PostgreSQL 16 (dados no volume `pgdata`) |
+| `api` | http://localhost:8080 | Backend Spring Boot (Swagger em `/swagger-ui.html`) |
+| `web` | http://localhost:8081 | App Expo no navegador (`expo start --web`), com recarga automática |
+
+- Logs: `docker compose logs -f api` (ou `web`).
+- Depois de mudar o código do backend: `docker compose up -d --build api`.
+- No `web`, o Compose Watch copia para o container cada arquivo alterado em `frontend/`. No Windows o Docker não repassa eventos de arquivo de pastas montadas, por isso não usamos bind mount. Quando o `package-lock.json` muda, a imagem é reconstruída e o `npm ci` roda de novo.
+- No navegador, o refresh token fica no `sessionStorage` (`tokenStorage.web.ts`), porque o `expo-secure-store` não existe na web.
+- A API libera CORS só para `http://localhost:8081` (variável `CORS_ALLOWED_ORIGINS`). Fora do Docker o CORS fica desligado, como em produção.
+- Emulador Android e Expo Go continuam rodando fora do Docker (seção [Rodando o app mobile](#-rodando-o-app-mobile)), apontando para a API do container.
+
+## ▶️ Rodando o backend localmente (sem Docker para a API)
 
 Pré-requisitos: Docker, Java 17+.
 
 ```bash
-# 1. Banco de dados
-docker compose up -d
+# 1. Só o banco de dados
+docker compose up -d postgres
 
 # 2. Segredo que assina os tokens JWT (obrigatório; o boot falha sem ele)
 export JWT_SECRET=$(openssl rand -base64 48)
@@ -70,7 +97,7 @@ npx expo start   # pressione "a" para abrir no emulador Android
 ```
 
 O app guarda o refresh token no armazenamento seguro do aparelho (`expo-secure-store`) e renova o access token automaticamente.
-O `expo start --web` não consegue falar com a API (o backend não habilita CORS); use emulador ou aparelho.
+Para rodar no navegador, use o serviço `web` do Docker (seção acima): ele já sobe com a API configurada para aceitar CORS de `http://localhost:8081`.
 
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
