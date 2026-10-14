@@ -29,75 +29,57 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 * Git & GitHub Actions
 * Deploy contínuo na plataforma Railway
 
-## 🐳 Rodando tudo com Docker
+## 🧑‍💻 Ambiente de desenvolvimento
 
-Pré-requisito: Docker. Java, Maven e Node não precisam estar instalados.
-
-```bash
-# 1. Variáveis de ambiente: copie e preencha o JWT_SECRET (openssl rand -base64 48)
-cp .env.example .env
-
-# 2. Sobe banco, API e o app no navegador, com recarga automática do app
-docker compose up --build --watch
-```
-
-O `--watch` deixa o terminal mostrando os logs; `Ctrl+C` para tudo. Para rodar em segundo plano sem recarga automática do app, use `docker compose up -d --build`.
-
-| Serviço | Endereço | O que é |
+| Parte | Onde roda | Como |
 |---|---|---|
-| `postgres` | `localhost:5432` | PostgreSQL 16 (dados no volume `pgdata`) |
-| `api` | http://localhost:8080 | Backend Spring Boot (Swagger em `/swagger-ui.html`) |
-| `web` | http://localhost:8081 | App Expo no navegador (`expo start --web`), com recarga automática |
+| Banco e outras dependências (cache, filas, bancos não relacionais) | Docker | Sobem sozinhas no Run do backend, ou `docker compose up -d` |
+| Backend (Spring Boot) | IntelliJ | Run no `BackendApplication` |
+| App (Expo) | VS Code / terminal | `npm start` (celular/emulador) ou `npm run web` (navegador) |
 
-- Logs: `docker compose logs -f api` (ou `web`).
-- Depois de mudar o código do backend: `docker compose up -d --build api`.
-- No `web`, o Compose Watch copia para o container cada arquivo alterado em `frontend/`. No Windows o Docker não repassa eventos de arquivo de pastas montadas, por isso não usamos bind mount. Quando o `package-lock.json` muda, a imagem é reconstruída e o `npm ci` roda de novo.
-- No navegador, o refresh token fica no `sessionStorage` (`tokenStorage.web.ts`), porque o `expo-secure-store` não existe na web.
-- A API libera CORS só para `http://localhost:8081` (variável `CORS_ALLOWED_ORIGINS`). Fora do Docker o CORS fica desligado, como em produção.
-- Emulador Android e Expo Go continuam rodando fora do Docker (seção [Rodando o app mobile](#-rodando-o-app-mobile)), apontando para a API do container.
+**Por que a aplicação não roda no Docker?** Uma *imagem* é uma "foto" pronta do programa e um *container* é essa foto rodando. Se a API rodasse num container, cada mudança no código exigiria gerar a foto de novo (`docker build`). No dia a dia é mais rápido rodar pela IDE, com debugger e recarga. Por isso o [`docker-compose.yml`](docker-compose.yml) tem **só dependências**. O [`backend/Dockerfile`](backend/Dockerfile) continua no repositório, mas é usado só no deploy.
 
-## ▶️ Rodando o backend localmente (sem Docker para a API)
+### 1. Variáveis de ambiente (uma vez)
 
-Pré-requisitos: Docker, Java 17+.
+São dois arquivos, cada um com o passo a passo nos comentários. Os dois ficam fora do git.
 
 ```bash
-# 1. Só o banco de dados
-docker compose up -d postgres
-
-# 2. Segredo que assina os tokens JWT (obrigatório; o boot falha sem ele)
-export JWT_SECRET=$(openssl rand -base64 48)
-
-# 3. Opcional: primeiro usuário ADMIN, criado no boot se ainda não existir nenhum
-export ADMIN_PHONE=11999999999
-export ADMIN_PASSWORD=troque-esta-senha
-
-# 4. Sobe a API (Flyway aplica as migrações automaticamente)
-cd backend && ./mvnw spring-boot:run
+cp .env.example .env                        # backend: preencha o JWT_SECRET
+cp frontend/.env.example frontend/.env.local  # app: preencha a chave do Google (seção abaixo)
 ```
 
-No IntelliJ, defina as variáveis em *Run → Edit Configurations → Environment variables*.
-Todas as variáveis disponíveis estão documentadas em [`.env.example`](.env.example).
+### 2. Backend
+
+Pré-requisitos: Docker aberto e Java 17+.
+
+1. Abra o projeto no IntelliJ e rode o `BackendApplication` (▶ ao lado do `main`). O diretório de trabalho é a pasta `backend/`, que é o padrão do IntelliJ para o módulo Maven.
+2. Ao subir, o Spring Boot:
+   - lê o `.env` da raiz sozinho, sem precisar configurar variáveis na IDE;
+   - roda `docker compose up` e espera o Postgres ficar pronto (`spring-boot-docker-compose`);
+   - aplica as migrações do Flyway.
+3. Ao parar a API, o banco continua rodando. Os dados ficam no volume `pgdata` e só somem com `docker compose down -v`.
+
+Pelo terminal funciona igual: `cd backend && ./mvnw spring-boot:run`.
 
 Swagger: http://localhost:8080/swagger-ui.html — use **Authorize** com o `accessToken` de `/api/auth/login`.
+Para ver os dados, conecte no banco **`accessmap`** (`localhost:5432`, usuário `postgres`, senha `accessmap123`).
 
-Testes (`./mvnw test`) sobem um Postgres descartável via Testcontainers; precisam do Docker rodando.
+Testes (`./mvnw test`) sobem um Postgres descartável via Testcontainers e precisam do Docker rodando.
 
-## 📱 Rodando o app mobile
+### 3. App
 
-Pré-requisitos: Node 20+, backend rodando (seção acima) e um emulador Android ou o Expo Go no celular.
+Pré-requisitos: Node 20+, backend rodando e, para o celular, o Expo Go.
 
 ```bash
 cd frontend
 npm ci
-
-# URL da API: 10.0.2.2 no emulador Android, IP da sua máquina na rede se usar aparelho físico
-cp .env.example .env.local
-
-npx expo start   # pressione "a" para abrir no emulador Android
+npm start       # QR code para o Expo Go; "a" abre no emulador Android
+npm run web     # navegador em http://localhost:8081
 ```
 
-O app guarda o refresh token no armazenamento seguro do aparelho (`expo-secure-store`) e renova o access token automaticamente.
-Para rodar no navegador, use o serviço `web` do Docker (seção acima): ele já sobe com a API configurada para aceitar CORS de `http://localhost:8081`.
+- O `EXPO_PUBLIC_API_URL` do `frontend/.env.local` muda conforme onde o app roda; os valores estão explicados no arquivo. O Expo só lê esse arquivo ao iniciar.
+- No celular e no emulador, o refresh token fica no armazenamento seguro do aparelho (`expo-secure-store`). No navegador ele fica no `sessionStorage` (`tokenStorage.web.ts`).
+- No navegador, a API só aceita chamadas de `http://localhost:8081`, configurado pela variável `CORS_ALLOWED_ORIGINS` do `.env`. Vazio desliga o CORS, como em produção.
 
 Antes de abrir um PR do app:
 
@@ -108,6 +90,20 @@ npx expo-doctor     # versões compatíveis com o SDK
 ```
 
 As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
+
+## 🔑 Chave da Google Maps Platform
+
+A busca de locais usa a **Places API (New)**. Cada integrante gera a própria chave, sem custo dentro da cota gratuita:
+
+1. Em https://console.cloud.google.com, crie um projeto (ex.: `accessmap-dev`) e vincule uma conta de faturamento. O Google exige isso mesmo para o uso gratuito.
+2. Em **APIs e serviços → Biblioteca**, ative a **Places API (New)**. Atenção: não é a "Places API" antiga.
+3. Em **APIs e serviços → Credenciais → Criar credenciais → Chave de API**, crie a chave e edite:
+   - **Restrições de API**: marque só a **Places API (New)**.
+   - **Restrições de aplicativo**: deixe "Nenhuma" na chave de desenvolvimento. Restringir a um app Android ou iOS não funciona no Expo Go nem no navegador, porque o Expo Go se identifica para o Google como o app dele (`host.exp.exponent`), não como o AccessMap. A restrição por app fica para as chaves dos builds de produção.
+4. Em **APIs e serviços → Places API (New) → Cotas**, limite as requisições por dia (ex.: 300). Em **Faturamento → Orçamentos e alertas**, crie um alerta de orçamento baixo.
+5. Cole a chave em `frontend/.env.local`, na linha `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=`, e reinicie o `npm start` / `npm run web`.
+
+> Variáveis `EXPO_PUBLIC_*` vão dentro do app e qualquer pessoa pode extraí-las. Por isso a chave **nunca** vai para o git, e as restrições e a cota acima são obrigatórias. Sem a chave, a busca da Home mostra um aviso em vez de quebrar.
 
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
