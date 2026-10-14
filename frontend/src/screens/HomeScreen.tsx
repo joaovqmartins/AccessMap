@@ -1,14 +1,11 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
 
 import { useAuth } from '../auth/AuthContext';
-import Button from '../components/Button';
-
-// TODO(#23): remover quando a busca pelo Google Maps fornecer o place_id real
-const EXAMPLE_PLACE = { placeId: 'ChIJN1t_tDeuEmsRUsoyG83frY4', name: 'Local de exemplo' };
+import PlaceSearch from '../components/PlaceSearch';
 
 function initials(name: string | undefined) {
   if (!name) return '?';
@@ -42,10 +39,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Barra de Busca */}
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar locais ou restaurantes..."
-          placeholderTextColor="#888"
+        <PlaceSearch
+          onSelect={({ placeId, mainText }) =>
+            router.push({ pathname: '/locais/[placeId]', params: { placeId, name: mainText } })
+          }
         />
       </View>
 
@@ -63,13 +60,6 @@ export default function HomeScreen() {
       {/* 3. ÁREA DO MAPA (Centro) */}
       <View style={styles.mapContainer}>
         <Text style={styles.mapPlaceholderText}>[ COMPONENTE DE MAPA AQUI ]</Text>
-        <View style={styles.exampleButton}>
-          <Button
-            title="Ver local de exemplo"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/locais/[placeId]', params: EXAMPLE_PLACE })}
-          />
-        </View>
       </View>
 
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
@@ -130,13 +120,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  searchInput: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
 
   // --- Estilos das Opções (Filtros) ---
   optionsContainer: {
@@ -161,9 +144,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB', // Cor de fundo simulando um mapa carregando
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  exampleButton: {
-    marginTop: 16,
   },
   mapPlaceholderText: {
     color: '#6B7280',
