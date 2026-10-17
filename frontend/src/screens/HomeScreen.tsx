@@ -14,7 +14,7 @@ import NearbyPlaceItem from '../components/NearbyPlaceItem';
 import PlaceSearch from '../components/PlaceSearch';
 import { ALL_NEARBY, PLACE_CATEGORIES, type PlaceCategory } from '../constants/categories';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
-import { useNearbyPlaces } from '../hooks/useNearbyPlaces';
+import { NO_FILTERS, useNearbyPlaces } from '../hooks/useNearbyPlaces';
 import { useUserLocation, type LocationState } from '../hooks/useUserLocation';
 import { formatDistance } from '../utils/distance';
 
@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { state: location, request: requestLocation } = useUserLocation();
   const [category, setCategory] = useState<PlaceCategory>(ALL_NEARBY);
-  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category);
+  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category, NO_FILTERS);
 
   // Ao voltar de um local (talvez recém-avaliado), atualiza as notas. Na primeira vez o hook já busca.
   const focusedOnce = useRef(false);
