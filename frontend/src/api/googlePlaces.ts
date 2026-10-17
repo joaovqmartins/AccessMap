@@ -139,10 +139,11 @@ async function post<T>(url: string, fieldMask: string, body: unknown, signal?: A
   }
 
   if (!response.ok) {
-    // 400/403 quase sempre é chave inválida, sem a Places API (New) ativada ou com restrição errada
+    // 400/403 quase sempre é chave inválida, sem a Places API (New) ativada ou com restrição errada;
+    // 401 é credencial que nem é chave de API (ex.: "AQ." de outro produto do Google Cloud, em vez de "AIza")
     throw new ApiError(
       response.status,
-      response.status === 400 || response.status === 403
+      [400, 401, 403].includes(response.status)
         ? 'Busca de locais indisponível: verifique a chave do Google.'
         : 'Não foi possível buscar locais agora. Tente novamente.',
     );
