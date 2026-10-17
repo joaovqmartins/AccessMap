@@ -11,8 +11,10 @@ export function distanceInMeters(a: Point, b: Point) {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h));
 }
 
-/** "350 m", "1,2 km". */
+/** "menos de 10 m", "350 m", "1,2 km". */
 export function formatDistance(meters: number) {
+  // O Google devolve o mesmo ponto para vários locais de um endereço: "0 m" soaria como erro
+  if (meters < 10) return 'menos de 10 m';
   if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
 }

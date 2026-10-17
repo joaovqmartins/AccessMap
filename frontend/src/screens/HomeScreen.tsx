@@ -1,22 +1,22 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Linking, Platform,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Linking, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router, useFocusEffect } from 'expo-router';
 
-import { NEARBY_RADIUS_M } from '../api/googlePlaces';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
-import ErrorMessage from '../components/ErrorMessage';
-import NearbyPlaceItem from '../components/NearbyPlaceItem';
+import FiltersModal from '../components/FiltersModal';
+import NearbyPlaceList from '../components/NearbyPlaceList';
 import PlaceSearch from '../components/PlaceSearch';
+import PlacesMap from '../components/PlacesMap';
 import { ALL_NEARBY, PLACE_CATEGORIES, type PlaceCategory } from '../constants/categories';
+import { TAG_LABELS } from '../constants/labels';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
-import { useNearbyPlaces } from '../hooks/useNearbyPlaces';
+import { NO_FILTERS, hasFilters, useNearbyPlaces, type AccessibilityFilters } from '../hooks/useNearbyPlaces';
 import { useUserLocation, type LocationState } from '../hooks/useUserLocation';
-import { formatDistance } from '../utils/distance';
 
 function initials(name: string | undefined) {
   if (!name) return '?';
@@ -24,15 +24,33 @@ function initials(name: string | undefined) {
   return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 }
 
+// O react-native-maps não roda no navegador: lá a Home mostra só a lista
+const MAP_AVAILABLE = Platform.OS !== 'web';
+
 function openPlace(placeId: string, name: string) {
   router.push({ pathname: '/locais/[placeId]', params: { placeId, name } });
+}
+
+/** "Rampas e entradas, Elevadores e minhas necessidades"; `null` sem filtro. */
+function describeFilters({ tags, useMyNeeds }: AccessibilityFilters) {
+  const parts = tags.map((t) => TAG_LABELS[t]);
+  if (useMyNeeds) parts.push('minhas necessidades');
+  if (parts.length === 0) return null;
+  return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`;
 }
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { state: location, request: requestLocation } = useUserLocation();
   const [category, setCategory] = useState<PlaceCategory>(ALL_NEARBY);
-  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category);
+  // "Minhas necessidades" começa desligado: com poucas avaliações, a lista viria quase vazia sem o usuário entender
+  const [filters, setFilters] = useState<AccessibilityFilters>(NO_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category, filters);
+  const activeFilters = filters.tags.length + (filters.useMyNeeds ? 1 : 0);
+  const filtersDescription = describeFilters(filters);
+  // Lista é o padrão: funciona com leitor de tela e na web, onde não há mapa
+  const [view, setView] = useState<'lista' | 'mapa'>('lista');
 
   // Ao voltar de um local (talvez recém-avaliado), atualiza as notas. Na primeira vez o hook já busca.
   const focusedOnce = useRef(false);
@@ -89,53 +107,88 @@ export default function HomeScreen() {
             );
           })}
         </ScrollView>
+        <View style={styles.toolbar}>
+          {MAP_AVAILABLE && (
+            <View style={styles.segmented} accessibilityRole="radiogroup" accessibilityLabel="Visualização">
+              {(['lista', 'mapa'] as const).map((v) => {
+                const selected = view === v;
+                return (
+                  <TouchableOpacity
+                    key={v}
+                    style={[styles.segment, selected && styles.optionPillSelected]}
+                    onPress={() => setView(v)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected }}
+                    accessibilityLabel={v === 'lista' ? 'Ver em lista' : 'Ver no mapa'}
+                  >
+                    <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+                      {v === 'lista' ? 'Lista' : 'Mapa'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+          <View style={styles.toolbarSpacer} />
+          <TouchableOpacity
+            style={[styles.toolButton, hasFilters(filters) && styles.optionPillSelected]}
+            onPress={() => setFiltersOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={activeFilters ? `Filtros de acessibilidade, ${activeFilters} ativos` : 'Filtros de acessibilidade'}
+          >
+            <Text style={[styles.optionText, hasFilters(filters) && styles.optionTextSelected]}>
+              Filtros{activeFilters ? ` (${activeFilters})` : ''}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 3. LOCAIS POR PERTO (o mapa da #26 entra aqui como outra visualização da mesma lista) */}
+      {/* 3. LOCAIS POR PERTO */}
       <View style={styles.results}>
         {location.status !== 'ready' ? (
           <LocationNotice location={location} onRequest={requestLocation} />
-        ) : (
-          <FlatList
-            data={nearby.places}
-            keyExtractor={(p) => p.placeId}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <NearbyPlaceItem place={item} onPress={() => openPlace(item.placeId, item.name)} />
+        ) : view === 'mapa' && !nearby.loading && !nearby.error ? (
+          <>
+            {(filtersDescription || nearby.summaryError) && (
+              <Text style={styles.mapBanner} accessibilityLiveRegion="polite">
+                {nearby.summaryError ?? `Filtrando por: ${filtersDescription}`}
+              </Text>
             )}
-            ListHeaderComponent={
-              <>
-                {nearby.places.length > 0 && (
-                  <Text style={styles.listTitle} accessibilityRole="header" accessibilityLiveRegion="polite">
-                    {category.label}: {nearby.places.length}{' '}
-                    {nearby.places.length === 1 ? 'local' : 'locais'} até {formatDistance(NEARBY_RADIUS_M)}
-                  </Text>
-                )}
-                <ErrorMessage message={nearby.summaryError} />
-              </>
-            }
-            ListEmptyComponent={
-              nearby.loading ? (
-                <ActivityIndicator style={styles.spinner} size="large" color={colors.primary}
-                  accessibilityLabel="Buscando locais por perto" />
-              ) : nearby.error ? (
-                <>
-                  <ErrorMessage message={nearby.error} />
-                  <Button title="Tentar novamente" variant="secondary" onPress={nearby.reload} />
-                </>
-              ) : (
-                <Text style={styles.notice}>
-                  Nenhum local desta categoria até {formatDistance(NEARBY_RADIUS_M)} de você.
-                </Text>
-              )
-            }
-            // Atribuição exigida pelo Google quando os dados dele aparecem sem o mapa dele
-            ListFooterComponent={
-              nearby.places.length > 0 ? <Text style={styles.attribution}>Google Maps</Text> : null
-            }
+            <PlacesMap
+              center={location.coords}
+              places={nearby.places}
+              unrated={nearby.unrated}
+              onOpen={(p) => openPlace(p.placeId, p.name)}
+            />
+          </>
+        ) : (
+          <NearbyPlaceList
+            places={nearby.places}
+            unrated={nearby.unrated}
+            total={nearby.total}
+            loading={nearby.loading}
+            error={nearby.error}
+            summaryError={nearby.summaryError}
+            categoryLabel={category.label}
+            filtersDescription={filtersDescription}
+            onRetry={nearby.reload}
+            onClearFilters={() => setFilters(NO_FILTERS)}
+            onOpen={(p) => openPlace(p.placeId, p.name)}
           />
         )}
       </View>
+
+      {filtersOpen && (
+        <FiltersModal
+          value={filters}
+          needs={user?.accessibilityNeeds ?? []}
+          onClose={() => setFiltersOpen(false)}
+          onApply={(f) => {
+            setFilters(f);
+            setFiltersOpen(false);
+          }}
+        />
+      )}
 
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
       <View style={styles.bottomNavigation}>
@@ -275,22 +328,50 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // --- Estilos da Lista de Locais ---
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    paddingHorizontal: 16,
+    paddingTop: spacing.sm,
+  },
+  toolbarSpacer: {
+    flex: 1,
+  },
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  segment: {
+    minHeight: MIN_TOUCH,
+    minWidth: 72,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  mapBanner: {
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  toolButton: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    backgroundColor: '#E0E0E0',
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  // --- Estilos dos Resultados ---
   results: {
     flex: 1, // O flex: 1 faz esta área expandir e ocupar todo o espaço restante
-  },
-  listContent: {
-    padding: spacing.md,
-    flexGrow: 1,
-  },
-  listTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  spinner: {
-    marginTop: spacing.lg,
   },
   noticeBox: {
     flex: 1,
@@ -302,11 +383,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textMuted,
     textAlign: 'center',
-  },
-  attribution: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'right',
   },
 
   // --- Estilos da Navegação Inferior ---

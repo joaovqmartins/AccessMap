@@ -1,22 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { PlaceSummary } from '../api/types';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
 import type { NearbyResult } from '../hooks/useNearbyPlaces';
 import { formatDistance } from '../utils/distance';
+import { adequateTagCount } from '../utils/placeSummary';
 import StarRating from './StarRating';
 
 type Props = {
   place: NearbyResult;
   onPress: () => void;
 };
-
-/** Características em que a maioria estrita dos votos é ADEQUADO (mesma regra da busca do backend). */
-function adequateTagCount(summary: PlaceSummary) {
-  return Object.values(summary.tagStats).filter(
-    (s) => s && s.adequadoCount > s.inadequadoCount + s.inexistenteCount,
-  ).length;
-}
 
 function describe({ name, address, distanceM, summary }: NearbyResult) {
   const parts = [name, `a ${formatDistance(distanceM)}`, address];
