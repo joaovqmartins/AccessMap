@@ -1,22 +1,21 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Linking, Platform,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Linking, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router, useFocusEffect } from 'expo-router';
 
-import { NEARBY_RADIUS_M } from '../api/googlePlaces';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
-import ErrorMessage from '../components/ErrorMessage';
-import NearbyPlaceItem from '../components/NearbyPlaceItem';
+import FiltersModal from '../components/FiltersModal';
+import NearbyPlaceList from '../components/NearbyPlaceList';
 import PlaceSearch from '../components/PlaceSearch';
 import { ALL_NEARBY, PLACE_CATEGORIES, type PlaceCategory } from '../constants/categories';
+import { TAG_LABELS } from '../constants/labels';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
-import { NO_FILTERS, useNearbyPlaces } from '../hooks/useNearbyPlaces';
+import { NO_FILTERS, hasFilters, useNearbyPlaces, type AccessibilityFilters } from '../hooks/useNearbyPlaces';
 import { useUserLocation, type LocationState } from '../hooks/useUserLocation';
-import { formatDistance } from '../utils/distance';
 
 function initials(name: string | undefined) {
   if (!name) return '?';
@@ -28,11 +27,23 @@ function openPlace(placeId: string, name: string) {
   router.push({ pathname: '/locais/[placeId]', params: { placeId, name } });
 }
 
+/** "Rampas e entradas, Elevadores e minhas necessidades"; `null` sem filtro. */
+function describeFilters({ tags, useMyNeeds }: AccessibilityFilters) {
+  const parts = tags.map((t) => TAG_LABELS[t]);
+  if (useMyNeeds) parts.push('minhas necessidades');
+  if (parts.length === 0) return null;
+  return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`;
+}
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const { state: location, request: requestLocation } = useUserLocation();
   const [category, setCategory] = useState<PlaceCategory>(ALL_NEARBY);
-  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category, NO_FILTERS);
+  // "Minhas necessidades" começa desligado: com poucas avaliações, a lista viria quase vazia sem o usuário entender
+  const [filters, setFilters] = useState<AccessibilityFilters>(NO_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category, filters);
+  const activeFilters = filters.tags.length + (filters.useMyNeeds ? 1 : 0);
 
   // Ao voltar de um local (talvez recém-avaliado), atualiza as notas. Na primeira vez o hook já busca.
   const focusedOnce = useRef(false);
@@ -89,53 +100,51 @@ export default function HomeScreen() {
             );
           })}
         </ScrollView>
+        <View style={styles.toolbar}>
+          <TouchableOpacity
+            style={[styles.toolButton, hasFilters(filters) && styles.optionPillSelected]}
+            onPress={() => setFiltersOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={activeFilters ? `Filtros de acessibilidade, ${activeFilters} ativos` : 'Filtros de acessibilidade'}
+          >
+            <Text style={[styles.optionText, hasFilters(filters) && styles.optionTextSelected]}>
+              Filtros{activeFilters ? ` (${activeFilters})` : ''}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 3. LOCAIS POR PERTO (o mapa da #26 entra aqui como outra visualização da mesma lista) */}
+      {/* 3. LOCAIS POR PERTO */}
       <View style={styles.results}>
         {location.status !== 'ready' ? (
           <LocationNotice location={location} onRequest={requestLocation} />
         ) : (
-          <FlatList
-            data={nearby.places}
-            keyExtractor={(p) => p.placeId}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <NearbyPlaceItem place={item} onPress={() => openPlace(item.placeId, item.name)} />
-            )}
-            ListHeaderComponent={
-              <>
-                {nearby.places.length > 0 && (
-                  <Text style={styles.listTitle} accessibilityRole="header" accessibilityLiveRegion="polite">
-                    {category.label}: {nearby.places.length}{' '}
-                    {nearby.places.length === 1 ? 'local' : 'locais'} até {formatDistance(NEARBY_RADIUS_M)}
-                  </Text>
-                )}
-                <ErrorMessage message={nearby.summaryError} />
-              </>
-            }
-            ListEmptyComponent={
-              nearby.loading ? (
-                <ActivityIndicator style={styles.spinner} size="large" color={colors.primary}
-                  accessibilityLabel="Buscando locais por perto" />
-              ) : nearby.error ? (
-                <>
-                  <ErrorMessage message={nearby.error} />
-                  <Button title="Tentar novamente" variant="secondary" onPress={nearby.reload} />
-                </>
-              ) : (
-                <Text style={styles.notice}>
-                  Nenhum local desta categoria até {formatDistance(NEARBY_RADIUS_M)} de você.
-                </Text>
-              )
-            }
-            // Atribuição exigida pelo Google quando os dados dele aparecem sem o mapa dele
-            ListFooterComponent={
-              nearby.places.length > 0 ? <Text style={styles.attribution}>Google Maps</Text> : null
-            }
+          <NearbyPlaceList
+            places={nearby.places}
+            unrated={nearby.unrated}
+            loading={nearby.loading}
+            error={nearby.error}
+            summaryError={nearby.summaryError}
+            categoryLabel={category.label}
+            filtersDescription={describeFilters(filters)}
+            onRetry={nearby.reload}
+            onClearFilters={() => setFilters(NO_FILTERS)}
+            onOpen={(p) => openPlace(p.placeId, p.name)}
           />
         )}
       </View>
+
+      {filtersOpen && (
+        <FiltersModal
+          value={filters}
+          needs={user?.accessibilityNeeds ?? []}
+          onClose={() => setFiltersOpen(false)}
+          onApply={(f) => {
+            setFilters(f);
+            setFiltersOpen(false);
+          }}
+        />
+      )}
 
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
       <View style={styles.bottomNavigation}>
@@ -275,22 +284,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // --- Estilos da Lista de Locais ---
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    paddingHorizontal: 16,
+    paddingTop: spacing.sm,
+  },
+  toolButton: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    backgroundColor: '#E0E0E0',
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  // --- Estilos dos Resultados ---
   results: {
     flex: 1, // O flex: 1 faz esta área expandir e ocupar todo o espaço restante
-  },
-  listContent: {
-    padding: spacing.md,
-    flexGrow: 1,
-  },
-  listTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  spinner: {
-    marginTop: spacing.lg,
   },
   noticeBox: {
     flex: 1,
@@ -302,11 +314,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textMuted,
     textAlign: 'center',
-  },
-  attribution: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'right',
   },
 
   // --- Estilos da Navegação Inferior ---
