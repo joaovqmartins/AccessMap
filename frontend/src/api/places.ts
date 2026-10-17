@@ -1,7 +1,13 @@
 import { ApiError, request } from './client';
-import type { Place } from './types';
+import type { Place, PlaceBatchRequest, PlaceSummary } from './types';
 
 export const placesApi = {
+  /** Agregados de vários locais numa chamada só, na mesma ordem de `placeIds`. */
+  batch(body: PlaceBatchRequest): Promise<PlaceSummary[]> {
+    return request<PlaceSummary[]>('/api/places/batch', { method: 'POST', body });
+  },
+
+
   /** O backend responde 404 enquanto o local não tem nenhuma avaliação: aqui isso vira `null`. */
   async get(placeId: string): Promise<Place | null> {
     try {
