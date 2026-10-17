@@ -72,6 +72,23 @@ export interface Place {
   updatedAt: string;
 }
 
+/** POST /api/places/batch: local que ninguém avaliou ainda vem zerado, não some. */
+export interface PlaceSummary {
+  placeId: string;
+  averageScore: number;
+  reviewCount: number;
+  tagStats: Partial<Record<AccessibilityTag, TagStats>>;
+}
+
+export interface PlaceBatchRequest {
+  /** No máximo 60. */
+  placeIds: string[];
+  /** Se vier, só voltam os locais que têm todas essas características. */
+  tags?: AccessibilityTag[];
+  /** Soma as tags essenciais para as necessidades do perfil. Exige login. */
+  useMyNeeds?: boolean;
+}
+
 export interface Review {
   id: string;
   userId: string;
