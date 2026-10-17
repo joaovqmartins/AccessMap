@@ -98,12 +98,22 @@ A busca de locais usa a **Places API (New)**. Cada integrante gera a própria ch
 1. Em https://console.cloud.google.com, crie um projeto (ex.: `accessmap-dev`) e vincule uma conta de faturamento. O Google exige isso mesmo para o uso gratuito.
 2. Em **APIs e serviços → Biblioteca**, ative a **Places API (New)**. Atenção: não é a "Places API" antiga.
 3. Em **APIs e serviços → Credenciais → Criar credenciais → Chave de API**, crie a chave e edite:
-   - **Restrições de API**: marque só a **Places API (New)**.
+   - A chave começa com `AIza` e tem 39 caracteres. Credencial que começa com `AQ.` é de outro produto do Google Cloud e a Places recusa (401).
+   - **Restrições de API**: marque só a **Places API (New)**. Se marcar a antiga, o Google responde 403 `API_KEY_SERVICE_BLOCKED`. Mudanças na chave levam alguns minutos para valer.
    - **Restrições de aplicativo**: deixe "Nenhuma" na chave de desenvolvimento. Restringir a um app Android ou iOS não funciona no Expo Go nem no navegador, porque o Expo Go se identifica para o Google como o app dele (`host.exp.exponent`), não como o AccessMap. A restrição por app fica para as chaves dos builds de produção.
 4. Em **APIs e serviços → Places API (New) → Cotas**, limite as requisições por dia (ex.: 300). Em **Faturamento → Orçamentos e alertas**, crie um alerta de orçamento baixo.
 5. Cole a chave em `frontend/.env.local`, na linha `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=`, e reinicie o `npm start` / `npm run web`.
 
 > Variáveis `EXPO_PUBLIC_*` vão dentro do app e qualquer pessoa pode extraí-las. Por isso a chave **nunca** vai para o git, e as restrições e a cota acima são obrigatórias. Sem a chave, a busca da Home mostra um aviso em vez de quebrar.
+
+### Mapa e localização
+
+A Home mostra os locais por perto em **lista** (padrão) ou **mapa**:
+
+- **Expo Go**: o mapa (`react-native-maps`) funciona sem configurar nada. É Google Maps no Android e Apple Maps no iOS, usando a configuração do próprio Expo Go. A chave acima serve para a lista de locais, não para desenhar o mapa.
+- **Navegador**: não tem mapa, porque o `react-native-maps` não roda na web. A Home mostra só a lista, e o seletor Lista | Mapa não aparece.
+- **Build de loja** (EAS): o Android precisa de uma chave própria do **Maps SDK for Android**, configurada no plugin do `react-native-maps` no `app.json`. Isso fica para quando houver build de produção.
+- **Localização no celular**: o app pede permissão na Home. Para testar no Expo Go, o `EXPO_PUBLIC_API_URL` precisa ser o IP do computador na rede (ex.: `http://192.168.1.9:8080`), não `localhost`. Veja o `frontend/.env.example`.
 
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
