@@ -27,7 +27,7 @@ accessmap:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
 ---
-# Le o .env da raiz (rodando de backend/ ou da raiz). Variaveis de ambiente reais tem prioridade.
+# Le o .env da raiz (rodando de AccessMap.Back/ ou da raiz). Variaveis de ambiente reais tem prioridade.
 # Fora do perfil de teste: os testes nao podem depender do .env de quem esta rodando.
 spring:
   config:

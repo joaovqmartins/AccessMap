@@ -37,29 +37,29 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 | Backend (Spring Boot) | IntelliJ | Run no `BackendApplication` |
 | App (Expo) | VS Code / terminal | `npm start` (celular/emulador) ou `npm run web` (navegador) |
 
-**Por que a aplicação não roda no Docker?** Uma *imagem* é uma "foto" pronta do programa e um *container* é essa foto rodando. Se a API rodasse num container, cada mudança no código exigiria gerar a foto de novo (`docker build`). No dia a dia é mais rápido rodar pela IDE, com debugger e recarga. Por isso o [`docker-compose.yml`](docker-compose.yml) tem **só dependências**. O [`backend/Dockerfile`](backend/Dockerfile) continua no repositório, mas é usado só no deploy.
+**Por que a aplicação não roda no Docker?** Uma *imagem* é uma "foto" pronta do programa e um *container* é essa foto rodando. Se a API rodasse num container, cada mudança no código exigiria gerar a foto de novo (`docker build`). No dia a dia é mais rápido rodar pela IDE, com debugger e recarga. Por isso o [`docker-compose.yml`](docker-compose.yml) tem **só dependências**. O [`AccessMap.Back/Dockerfile`](AccessMap.Back/Dockerfile) continua no repositório, mas é usado só no deploy.
 
 ### 1. Variáveis de ambiente (uma vez)
 
 São dois arquivos, cada um com o passo a passo nos comentários. Os dois ficam fora do git.
 
 ```bash
-cp .env.example .env                        # backend: preencha o JWT_SECRET
-cp frontend/.env.example frontend/.env.local  # app: preencha a chave do Google (seção abaixo)
+cp .env.example .env                                        # backend: preencha o JWT_SECRET
+cp AccessMap.Front/.env.example AccessMap.Front/.env.local  # app: preencha a chave do Google (seção abaixo)
 ```
 
 ### 2. Backend
 
 Pré-requisitos: Docker aberto e Java 17+.
 
-1. Abra o projeto no IntelliJ e rode o `BackendApplication` (▶ ao lado do `main`). O diretório de trabalho é a pasta `backend/`, que é o padrão do IntelliJ para o módulo Maven.
+1. Abra o projeto no IntelliJ e rode o `BackendApplication` (▶ ao lado do `main`). O diretório de trabalho é a pasta `AccessMap.Back/`, que é o padrão do IntelliJ para o módulo Maven.
 2. Ao subir, o Spring Boot:
    - lê o `.env` da raiz sozinho, sem precisar configurar variáveis na IDE;
    - roda `docker compose up` e espera o Postgres ficar pronto (`spring-boot-docker-compose`);
    - aplica as migrações do Flyway.
 3. Ao parar a API, o banco continua rodando. Os dados ficam no volume `pgdata` e só somem com `docker compose down -v`.
 
-Pelo terminal funciona igual: `cd backend && ./mvnw spring-boot:run`.
+Pelo terminal funciona igual: `cd AccessMap.Back && ./mvnw spring-boot:run`.
 
 Swagger: http://localhost:8080/swagger-ui.html — use **Authorize** com o `accessToken` de `/api/auth/login`.
 Para ver os dados, conecte no banco **`accessmap`** (`localhost:5432`, usuário `postgres`, senha `accessmap123`).
@@ -71,13 +71,13 @@ Testes (`./mvnw test`) sobem um Postgres descartável via Testcontainers e preci
 Pré-requisitos: Node 20+, backend rodando e, para o celular, o Expo Go.
 
 ```bash
-cd frontend
+cd AccessMap.Front
 npm ci
 npm start       # QR code para o Expo Go; "a" abre no emulador Android
 npm run web     # navegador em http://localhost:8081
 ```
 
-- O `EXPO_PUBLIC_API_URL` do `frontend/.env.local` muda conforme onde o app roda; os valores estão explicados no arquivo. O Expo só lê esse arquivo ao iniciar.
+- O `EXPO_PUBLIC_API_URL` do `AccessMap.Front/.env.local` muda conforme onde o app roda; os valores estão explicados no arquivo. O Expo só lê esse arquivo ao iniciar.
 - No celular e no emulador, o refresh token fica no armazenamento seguro do aparelho (`expo-secure-store`). No navegador ele fica no `sessionStorage` (`tokenStorage.web.ts`).
 - No navegador, a API só aceita chamadas de `http://localhost:8081`, configurado pela variável `CORS_ALLOWED_ORIGINS` do `.env`. Vazio desliga o CORS, como em produção.
 
@@ -102,7 +102,7 @@ A busca de locais usa a **Places API (New)**. Cada integrante gera a própria ch
    - **Restrições de API**: marque só a **Places API (New)**. Se marcar a antiga, o Google responde 403 `API_KEY_SERVICE_BLOCKED`. Mudanças na chave levam alguns minutos para valer.
    - **Restrições de aplicativo**: deixe "Nenhuma" na chave de desenvolvimento. Restringir a um app Android ou iOS não funciona no Expo Go nem no navegador, porque o Expo Go se identifica para o Google como o app dele (`host.exp.exponent`), não como o AccessMap. A restrição por app fica para as chaves dos builds de produção.
 4. Em **APIs e serviços → Places API (New) → Cotas**, limite as requisições por dia (ex.: 300). Em **Faturamento → Orçamentos e alertas**, crie um alerta de orçamento baixo.
-5. Cole a chave em `frontend/.env.local`, na linha `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=`, e reinicie o `npm start` / `npm run web`.
+5. Cole a chave em `AccessMap.Front/.env.local`, na linha `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=`, e reinicie o `npm start` / `npm run web`.
 
 > Variáveis `EXPO_PUBLIC_*` vão dentro do app e qualquer pessoa pode extraí-las. Por isso a chave **nunca** vai para o git, e as restrições e a cota acima são obrigatórias. Sem a chave, a busca da Home mostra um aviso em vez de quebrar.
 
@@ -113,7 +113,7 @@ A Home mostra os locais por perto em **lista** (padrão) ou **mapa**:
 - **Expo Go**: o mapa (`react-native-maps`) funciona sem configurar nada. É Google Maps no Android e Apple Maps no iOS, usando a configuração do próprio Expo Go. A chave acima serve para a lista de locais, não para desenhar o mapa.
 - **Navegador**: não tem mapa, porque o `react-native-maps` não roda na web. A Home mostra só a lista, e o seletor Lista | Mapa não aparece.
 - **Build de loja** (EAS): o Android precisa de uma chave própria do **Maps SDK for Android**, configurada no plugin do `react-native-maps` no `app.json`. Isso fica para quando houver build de produção.
-- **Localização no celular**: o app pede permissão na Home. Para testar no Expo Go, o `EXPO_PUBLIC_API_URL` precisa ser o IP do computador na rede (ex.: `http://192.168.1.9:8080`), não `localhost`. Veja o `frontend/.env.example`.
+- **Localização no celular**: o app pede permissão na Home. Para testar no Expo Go, o `EXPO_PUBLIC_API_URL` precisa ser o IP do computador na rede (ex.: `http://192.168.1.9:8080`), não `localhost`. Veja o `AccessMap.Front/.env.example`.
 
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
