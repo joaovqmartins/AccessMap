@@ -165,6 +165,7 @@ export default function HomeScreen() {
           <NearbyPlaceList
             places={nearby.places}
             unrated={nearby.unrated}
+            total={nearby.total}
             loading={nearby.loading}
             error={nearby.error}
             summaryError={nearby.summaryError}

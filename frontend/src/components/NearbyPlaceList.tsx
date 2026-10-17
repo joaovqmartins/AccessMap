@@ -12,6 +12,8 @@ type Props = {
   places: NearbyResult[];
   /** Só com filtro: locais que ninguém avaliou, mostrados à parte. */
   unrated: NearbyResult[];
+  /** Quantos locais a busca trouxe, antes do filtro. */
+  total: number;
   loading: boolean;
   error: string | null;
   summaryError: string | null;
@@ -28,7 +30,7 @@ type Section = { key: 'matching' | 'unrated'; title?: string; hint?: string; dat
 const RADIUS = formatDistance(NEARBY_RADIUS_M);
 
 export default function NearbyPlaceList({
-  places, unrated, loading, error, summaryError, categoryLabel, filtersDescription, onRetry, onClearFilters, onOpen,
+  places, unrated, total, loading, error, summaryError, categoryLabel, filtersDescription, onRetry, onClearFilters, onOpen,
 }: Props) {
   if (loading) {
     return (
@@ -45,7 +47,6 @@ export default function NearbyPlaceList({
     );
   }
 
-  const total = places.length + unrated.length;
   const sections: Section[] = [{ key: 'matching', data: places }];
   if (unrated.length > 0) {
     sections.push({
@@ -96,8 +97,9 @@ export default function NearbyPlaceList({
           <ErrorMessage message={summaryError} />
         </>
       }
+      // Com filtro e nenhum local atendendo, quem avisa é o rodapé da seção, não esta mensagem
       ListEmptyComponent={
-        <Text style={styles.notice}>Nenhum local desta categoria até {RADIUS} de você.</Text>
+        total === 0 ? <Text style={styles.notice}>Nenhum local desta categoria até {RADIUS} de você.</Text> : null
       }
       // Atribuição exigida pelo Google quando os dados dele aparecem sem o mapa dele
       ListFooterComponent={total > 0 ? <Text style={styles.attribution}>Google Maps</Text> : null}

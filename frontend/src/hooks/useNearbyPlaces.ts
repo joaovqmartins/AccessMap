@@ -31,6 +31,8 @@ type Result = {
   places: NearbyResult[];
   /** Com filtro: locais que ninguém avaliou ainda. O backend os tira do filtro, mas não dá para dizer que não atendem. */
   unrated: NearbyResult[];
+  /** Quantos locais o Google trouxe, antes do filtro. */
+  total: number;
   error: string | null;
   /** O Google respondeu mas o backend não: a lista aparece sem as notas e sem filtro. */
   summaryError: string | null;
@@ -68,7 +70,7 @@ export function useNearbyPlaces(coords: Coords | null, category: PlaceCategory, 
       } catch (e) {
         if (cancelled) return;
         const error = e instanceof Error ? e.message : 'Erro na busca';
-        setResult({ key, places: [], unrated: [], error, summaryError: null });
+        setResult({ key, places: [], unrated: [], total: 0, error, summaryError: null });
         return;
       }
 
@@ -106,6 +108,7 @@ export function useNearbyPlaces(coords: Coords | null, category: PlaceCategory, 
         unrated: matching
           ? results.filter((p) => !matching.has(p.placeId) && p.summary?.reviewCount === 0)
           : [],
+        total: results.length,
         error: null,
         summaryError,
       });
@@ -127,6 +130,7 @@ export function useNearbyPlaces(coords: Coords | null, category: PlaceCategory, 
   return {
     places: current?.places ?? [],
     unrated: current?.unrated ?? [],
+    total: current?.total ?? 0,
     error: current?.error ?? null,
     summaryError: current?.summaryError ?? null,
     loading: !!key && !current,
