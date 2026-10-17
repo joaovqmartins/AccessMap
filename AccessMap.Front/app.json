@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "AccessMap",
+    "slug": "accessmap",
     "version": "1.0.0",
     "scheme": "accessmap",
     "orientation": "portrait",

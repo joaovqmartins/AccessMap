@@ -17,7 +17,7 @@ export default function PlaceSearch({ onSelect }: Props) {
   if (!isGooglePlacesConfigured()) {
     return (
       <Text style={styles.notice} accessibilityRole="alert">
-        Busca indisponível: configure a chave do Google em frontend/.env.local (veja o README).
+        Busca indisponível: configure a chave do Google em AccessMap.Front/.env.local (veja o README).
       </Text>
     );
   }
