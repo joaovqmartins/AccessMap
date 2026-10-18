@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { reviewsApi } from '../api/reviews';
@@ -39,9 +39,12 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
     [placeId],
   );
 
-  useEffect(() => {
-    loadPage(0);
-  }, [loadPage]);
+  // Recarrega do início ao voltar para a tela: uma avaliação pode ter sido editada ou excluída no detalhe
+  useFocusEffect(
+    useCallback(() => {
+      loadPage(0);
+    }, [loadPage]),
+  );
 
   function loadMore() {
     if (loadingMore || loading || page + 1 >= totalPages) return;
