@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { reviewsApi } from '../api/reviews';
@@ -10,6 +10,7 @@ import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import ReviewCard from '../components/ReviewCard';
 import { colors, spacing } from '../constants/theme';
+import { confirm } from '../utils/dialog';
 
 export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
   const { user } = useAuth();
@@ -40,11 +41,10 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
 
   const isMine = !!review && review.userId === user?.id;
 
-  function confirmDelete() {
-    Alert.alert('Excluir avaliação', 'Tem certeza? Esta ação não pode ser desfeita.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: handleDelete },
-    ]);
+  async function confirmDelete() {
+    if (await confirm('Excluir avaliação', 'Tem certeza? Esta ação não pode ser desfeita.', 'Excluir')) {
+      handleDelete();
+    }
   }
 
   async function handleDelete() {
