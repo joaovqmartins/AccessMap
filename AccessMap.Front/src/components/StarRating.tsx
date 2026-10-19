@@ -18,8 +18,9 @@ export default function StarRating({ value, size = 18 }: Props) {
       accessibilityLabel={`Nota ${value.toFixed(1).replace('.', ',')} de 5`}
     >
       {[1, 2, 3, 4, 5].map((n) => (
+        // Vazia em contorno, e não só em outra cor, para a nota não depender de distinguir cores
         <Text key={n} style={[styles.star, { fontSize: size }, n > filled && styles.empty]}>
-          ★
+          {n > filled ? '☆' : '★'}
         </Text>
       ))}
     </View>
@@ -29,5 +30,5 @@ export default function StarRating({ value, size = 18 }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   star: { color: colors.star, marginRight: 2 },
-  empty: { color: colors.border },
+  empty: { color: colors.textMuted },
 });

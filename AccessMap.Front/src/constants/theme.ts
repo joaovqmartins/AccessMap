@@ -17,7 +17,8 @@ export const colors = {
 export const assessmentColors = {
   ADEQUADO: colors.success,
   INADEQUADO: colors.danger,
-  INEXISTENTE: '#9E9E9E',
+  // #9E9E9E tinha contraste 2,68:1 com o branco; #616161 dá 6,19:1 (WCAG AA pede 4,5:1 para texto)
+  INEXISTENTE: '#616161',
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24 };

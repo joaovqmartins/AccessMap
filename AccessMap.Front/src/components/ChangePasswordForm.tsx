@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { usersApi } from '../api/users';
 import { spacing } from '../constants/theme';
+import { notify } from '../utils/dialog';
 import Button from './Button';
 import ErrorMessage from './ErrorMessage';
 import TextField from './TextField';
@@ -43,9 +44,8 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
     setSaving(true);
     try {
       await usersApi.updateMe({ currentPassword, password });
-      Alert.alert('Senha alterada', 'Por segurança, todas as sessões foram encerradas. Entre novamente com a nova senha.', [
-        { text: 'OK', onPress: onChanged },
-      ]);
+      await notify('Senha alterada', 'Por segurança, todas as sessões foram encerradas. Entre novamente com a nova senha.');
+      onChanged();
     } catch (e) {
       if (e instanceof ApiError) {
         setErrors(e.fields as Partial<Record<Field, string>>);
