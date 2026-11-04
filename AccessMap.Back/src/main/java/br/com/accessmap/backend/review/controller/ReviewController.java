@@ -1,8 +1,10 @@
 package br.com.accessmap.backend.review.controller;
 
+import br.com.accessmap.backend.review.dto.ReviewReportRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
 import br.com.accessmap.backend.review.model.Review;
+import br.com.accessmap.backend.review.service.ReviewReportService;
 import br.com.accessmap.backend.review.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +33,7 @@ import java.util.Map;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewReportService reviewReportService;
 
     @Operation(summary = "Lista as avaliações de um local",
             description = "Paginado; por padrão ordenado das mais recentes para as mais antigas.")
@@ -103,6 +106,25 @@ public class ReviewController {
     public ResponseEntity<Map<String, String>> delete(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         reviewService.delete(id, jwt.getSubject(), isAdmin(jwt));
         return ResponseEntity.ok(Map.of("message", "Avaliação removida com sucesso"));
+    }
+
+    @Operation(summary = "Denuncia uma avaliação",
+            description = "Quem denuncia é o usuário autenticado e não aparece em nenhuma resposta da API. "
+                    + "A denúncia só fica registrada: não oculta a avaliação nem muda a nota do local.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Denúncia registrada"),
+            @ApiResponse(responseCode = "400", description = "Motivo ausente ou inexistente"),
+            @ApiResponse(responseCode = "401", description = "Requer autenticação"),
+            @ApiResponse(responseCode = "403", description = "A avaliação é do próprio usuário"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada ou não publicada"),
+            @ApiResponse(responseCode = "409", description = "Usuário já denunciou esta avaliação")
+    })
+    @PostMapping("/{id}/report")
+    public ResponseEntity<Map<String, String>> report(@AuthenticationPrincipal Jwt jwt,
+                                                      @PathVariable String id,
+                                                      @Valid @RequestBody ReviewReportRequestDto request) {
+        reviewReportService.report(id, jwt.getSubject(), request.getReason());
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Denúncia registrada"));
     }
 
     private boolean isAdmin(Jwt jwt) {
