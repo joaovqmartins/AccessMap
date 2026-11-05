@@ -53,6 +53,9 @@ class ReviewServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ReviewRateLimiter reviewRateLimiter;
+
     @InjectMocks
     private ReviewService reviewService;
 

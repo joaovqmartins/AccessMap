@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../api/client';
@@ -31,6 +31,12 @@ export default function ReviewFormScreen(props: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const reviewId = props.mode === 'edit' ? props.reviewId : null;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // O botão de enviar fica no fim do formulário e o erro, no topo: sem rolar, a pessoa não vê o aviso
+  useEffect(() => {
+    if (formError) scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [formError]);
 
   // Edição: preenche o formulário com a avaliação atual
   useEffect(() => {
@@ -110,7 +116,7 @@ export default function ReviewFormScreen(props: Props) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title }} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ErrorMessage message={formError} />
 
         {!blocked && (

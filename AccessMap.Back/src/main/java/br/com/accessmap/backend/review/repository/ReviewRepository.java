@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +26,9 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     boolean existsByUserIdAndPlaceIdAndStatus(String userId, String placeId, ReviewStatus status);
 
     Optional<Review> findByIdAndStatus(String id, ReviewStatus status);
+
+    /** Avaliações criadas pelo usuário desde {@code since}, em qualquer status: excluir e recriar conta. */
+    long countByUserIdAndCreatedAtAfter(String userId, LocalDateTime since);
 
     @Query("SELECT COUNT(r) AS reviewCount, COALESCE(SUM(r.rating), 0) AS ratingSum FROM Review r " +
             "WHERE r.placeId = :placeId AND r.status = :status")
