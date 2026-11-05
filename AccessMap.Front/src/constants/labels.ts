@@ -1,4 +1,4 @@
-import type { AccessibilityNeed, AccessibilityTag, TagAssessment } from '../api/types';
+import type { AccessibilityNeed, AccessibilityTag, ReportReason, TagAssessment } from '../api/types';
 
 export const NEED_LABELS: Record<AccessibilityNeed, string> = {
   MOBILIDADE_REDUZIDA: 'Mobilidade reduzida',
@@ -24,7 +24,15 @@ export const ASSESSMENT_LABELS: Record<TagAssessment, string> = {
   INEXISTENTE: 'Inexistente',
 };
 
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+  INFORMACAO_FALSA: 'Informação falsa',
+  CONTEUDO_OFENSIVO: 'Conteúdo ofensivo',
+  SPAM: 'Propaganda ou spam',
+  OUTRO: 'Outro motivo',
+};
+
 // Ordem de exibição (mesma dos enums do backend)
 export const ALL_TAGS = Object.keys(TAG_LABELS) as AccessibilityTag[];
 export const ALL_NEEDS = Object.keys(NEED_LABELS) as AccessibilityNeed[];
 export const ALL_ASSESSMENTS = Object.keys(ASSESSMENT_LABELS) as TagAssessment[];
+export const ALL_REPORT_REASONS = Object.keys(REPORT_REASON_LABELS) as ReportReason[];

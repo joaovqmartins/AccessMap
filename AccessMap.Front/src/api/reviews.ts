@@ -1,5 +1,5 @@
 import { request } from './client';
-import type { Paged, Review, ReviewRequest, ReviewUpdateRequest } from './types';
+import type { Paged, ReportReason, Review, ReviewRequest, ReviewUpdateRequest } from './types';
 
 type ListParams = {
   placeId?: string;
@@ -18,6 +18,9 @@ export const reviewsApi = {
   update: (id: string, body: ReviewUpdateRequest) =>
     request<Review>(`/api/reviews/${encodeURIComponent(id)}`, { method: 'PATCH', body }),
   remove: (id: string) => request<void>(`/api/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  /** 409 se o usuário já denunciou esta avaliação. */
+  report: (id: string, reason: ReportReason) =>
+    request<void>(`/api/reviews/${encodeURIComponent(id)}/report`, { method: 'POST', body: { reason } }),
 
   /** A avaliação publicada do usuário para o local, se houver (no máximo uma por local). */
   async findMine(placeId: string, userId: string): Promise<Review | null> {
