@@ -30,6 +30,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final PlaceService placeService;
     private final UserService userService;
+    private final ReviewRateLimiter reviewRateLimiter;
 
     public Page<Review> findAll(Pageable pageable) {
         return reviewRepository.findByStatus(ReviewStatus.PUBLICADA, pageable);
@@ -64,6 +65,8 @@ public class ReviewService {
                     "Você já avaliou este local. Edite sua avaliação existente."
             );
         }
+
+        reviewRateLimiter.check(author);
 
         placeService.findOrCreateByPlaceId(request.getPlaceId());
 

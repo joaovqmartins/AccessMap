@@ -73,7 +73,8 @@ public class ReviewController {
             @ApiResponse(responseCode = "201", description = "Avaliação criada"),
             @ApiResponse(responseCode = "400", description = "Campo obrigatório ausente, nota fora de 1-5 ou nenhuma tag"),
             @ApiResponse(responseCode = "401", description = "Requer autenticação"),
-            @ApiResponse(responseCode = "409", description = "Usuário já avaliou este local")
+            @ApiResponse(responseCode = "409", description = "Usuário já avaliou este local"),
+            @ApiResponse(responseCode = "429", description = "Limite de avaliações por hora ou por dia atingido")
     })
     @PostMapping
     public ResponseEntity<Review> create(@AuthenticationPrincipal Jwt jwt,
