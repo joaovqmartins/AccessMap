@@ -65,7 +65,7 @@ export default function ReportReviewForm({ reviewId, onCancel, onDone }: Props) 
               onPress={() => setReason(option)}
               accessibilityRole="radio"
               accessibilityLabel={REPORT_REASON_LABELS[option]}
-              accessibilityState={{ checked: selected }}
+              aria-checked={selected}
               style={[styles.option, selected && styles.optionSelected]}
             >
               <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
