@@ -56,6 +56,8 @@ export type TagAssessment = 'ADEQUADO' | 'INADEQUADO' | 'INEXISTENTE';
 
 export type ReviewStatus = 'PUBLICADA' | 'OCULTA' | 'REMOVIDA';
 
+export type ReportReason = 'INFORMACAO_FALSA' | 'CONTEUDO_OFENSIVO' | 'SPAM' | 'OUTRO';
+
 export interface TagStats {
   adequadoCount: number;
   inadequadoCount: number;
