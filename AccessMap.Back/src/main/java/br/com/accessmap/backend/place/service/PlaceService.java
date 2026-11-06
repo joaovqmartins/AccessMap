@@ -29,6 +29,10 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final UserService userService;
 
+    public List<String> findAllPlaceIds() {
+        return placeRepository.findAllPlaceIds();
+    }
+
     public Place findByPlaceId(String placeId) {
         return placeRepository.findByPlaceId(placeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));

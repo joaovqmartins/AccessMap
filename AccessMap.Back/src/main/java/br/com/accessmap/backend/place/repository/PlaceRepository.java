@@ -9,11 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.List;
 import java.util.Optional;
 
 public interface PlaceRepository extends JpaRepository<Place, String> {
 
     Optional<Place> findByPlaceId(String placeId);
+
+    @Query("SELECT p.placeId FROM Place p")
+    List<String> findAllPlaceIds();
 
     /**
      * Condição "o local tem TODAS as características pedidas". Um local "tem" a característica quando a
