@@ -44,7 +44,7 @@ export default function ReviewFormScreen(props: Props) {
     reviewsApi
       .get(reviewId)
       .then((review) => {
-        if (review.userId !== user?.id) {
+        if (!review.mine) {
           setFormError('Você só pode editar as suas próprias avaliações.');
           return;
         }
@@ -55,7 +55,7 @@ export default function ReviewFormScreen(props: Props) {
       })
       .catch((e) => setFormError(e instanceof Error ? e.message : 'Não foi possível carregar a avaliação'))
       .finally(() => setLoading(false));
-  }, [reviewId, user?.id]);
+  }, [reviewId]);
 
   function validate(): Errors {
     const next: Errors = {};

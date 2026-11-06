@@ -42,7 +42,7 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
     }, [reviewId]),
   );
 
-  const isMine = !!review && review.userId === user?.id;
+  const isMine = !!review?.mine;
 
   async function confirmDelete() {
     if (await confirm('Excluir avaliação', 'Tem certeza? Esta ação não pode ser desfeita.', 'Excluir')) {

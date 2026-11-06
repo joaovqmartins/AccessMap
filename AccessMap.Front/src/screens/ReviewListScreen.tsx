@@ -4,14 +4,12 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-nativ
 
 import { reviewsApi } from '../api/reviews';
 import type { Review } from '../api/types';
-import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import ReviewCard from '../components/ReviewCard';
 import { colors, spacing } from '../constants/theme';
 
 export default function ReviewListScreen({ placeId }: { placeId: string }) {
-  const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -69,7 +67,7 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
       renderItem={({ item }) => (
         <ReviewCard
           review={item}
-          isMine={item.userId === user?.id}
+          isMine={item.mine}
           onPress={() => router.push({ pathname: '/avaliacoes/[id]', params: { id: item.id } })}
         />
       )}
