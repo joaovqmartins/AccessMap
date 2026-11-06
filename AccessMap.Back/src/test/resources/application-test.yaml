@@ -3,6 +3,11 @@ spring:
     show-sql: false
 
 accessmap:
+  auth:
+    # Os testes saem todos do mesmo IP: sem isso, as falhas de uma classe bloqueariam a outra.
+    rate-limit:
+      login-per-ip: 100000
+      register-per-ip: 100000
   jwt:
     # Segredo fixo apenas para testes. Nunca use em outro ambiente.
     secret: chave-de-teste-com-pelo-menos-32-bytes-de-tamanho
