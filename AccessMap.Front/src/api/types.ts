@@ -56,6 +56,8 @@ export type TagAssessment = 'ADEQUADO' | 'INADEQUADO' | 'INEXISTENTE';
 
 export type ReviewStatus = 'PUBLICADA' | 'OCULTA' | 'REMOVIDA';
 
+export type TrustBadge = 'NOVA' | 'CONFIAVEL';
+
 export type ReportReason = 'INFORMACAO_FALSA' | 'CONTEUDO_OFENSIVO' | 'SPAM' | 'OUTRO';
 
 export interface TagStats {
@@ -104,6 +106,8 @@ export interface Review {
   updatedAt: string;
   /** A API não expõe quem avaliou: diz só se a avaliação é de quem está logado. */
   mine: boolean;
+  /** Nível da conta quando avaliou. Só vem para esses dois: os outros não têm selo. */
+  trustBadge?: TrustBadge;
 }
 
 // Formato de Page serializado como PagedModel pelo backend
