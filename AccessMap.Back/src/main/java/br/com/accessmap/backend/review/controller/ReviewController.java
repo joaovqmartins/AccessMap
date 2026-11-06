@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,13 @@ public class ReviewController {
     private final ReviewReportService reviewReportService;
 
     @Operation(summary = "Lista as avaliações de um local",
-            description = "Paginado; por padrão ordenado das mais recentes para as mais antigas.")
+            description = "Paginado; por padrão ordenado das mais recentes para as mais antigas. "
+                    + "O filtro `userId` exige login e só vale para o próprio usuário ou para um ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de avaliações"),
+            @ApiResponse(responseCode = "401", description = "Filtro `userId` sem estar logado"),
+            @ApiResponse(responseCode = "403", description = "Filtro `userId` de outro usuário")
+    })
     @GetMapping
     public ResponseEntity<Page<ReviewResponseDto>> list(
             @AuthenticationPrincipal Jwt jwt,
@@ -46,6 +53,9 @@ public class ReviewController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         boolean hasPlace = placeId != null && !placeId.isBlank();
         boolean hasUser = userId != null && !userId.isBlank();
+        if (hasUser) {
+            assertCanFilterByUser(jwt, userId);
+        }
 
         Page<Review> page;
         if (hasPlace && hasUser) {
@@ -132,6 +142,16 @@ public class ReviewController {
                                                       @Valid @RequestBody ReviewReportRequestDto request) {
         reviewReportService.report(id, jwt.getSubject(), request.getReason());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Denúncia registrada"));
+    }
+
+    /** Listar as avaliações de alguém revela o histórico da pessoa: só ela mesma ou um ADMIN podem ver. */
+    private void assertCanFilterByUser(Jwt jwt, String userId) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Faça login para filtrar por usuário");
+        }
+        if (!userId.equals(jwt.getSubject()) && !isAdmin(jwt)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode listar as suas próprias avaliações");
+        }
     }
 
     /** As rotas de leitura são públicas: sem token, não há quem esteja vendo. */
