@@ -93,15 +93,17 @@ export interface PlaceBatchRequest {
 
 export interface Review {
   id: string;
-  userId: string;
   placeId: string;
   rating: number;
   comment: string | null;
   tags: ReviewTags;
-  reviewerNeeds: AccessibilityNeed[] | null;
+  /** Só vem para o próprio autor: é dado sensível (LGPD). */
+  reviewerNeeds?: AccessibilityNeed[] | null;
   status: ReviewStatus;
   createdAt: string;
   updatedAt: string;
+  /** A API não expõe quem avaliou: diz só se a avaliação é de quem está logado. */
+  mine: boolean;
 }
 
 // Formato de Page serializado como PagedModel pelo backend

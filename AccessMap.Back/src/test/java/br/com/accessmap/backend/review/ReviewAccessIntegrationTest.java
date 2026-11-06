@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -116,12 +117,16 @@ class ReviewAccessIntegrationTest extends AbstractIntegrationTest {
         Map<String, Object> corpo = new java.util.HashMap<>(reviewValida(placeUnico()));
         corpo.put("userId", outro.getId());
 
-        mockMvc.perform(post("/api/reviews")
+        MvcResult result = mockMvc.perform(post("/api/reviews")
                         .header(HttpHeaders.AUTHORIZATION, bearer(autor))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(corpo)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.userId").value(autor.getId()));
+                .andExpect(jsonPath("$.mine").value(true))
+                .andReturn();
+
+        String reviewId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
+        assertThat(reviewRepository.findById(reviewId).orElseThrow().getUserId()).isEqualTo(autor.getId());
     }
 
     @Test

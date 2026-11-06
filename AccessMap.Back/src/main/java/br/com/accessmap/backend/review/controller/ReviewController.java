@@ -2,6 +2,7 @@ package br.com.accessmap.backend.review.controller;
 
 import br.com.accessmap.backend.review.dto.ReviewReportRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewRequestDto;
+import br.com.accessmap.backend.review.dto.ReviewResponseDto;
 import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.service.ReviewReportService;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -36,25 +38,36 @@ public class ReviewController {
     private final ReviewReportService reviewReportService;
 
     @Operation(summary = "Lista as avaliações de um local",
-            description = "Paginado; por padrão ordenado das mais recentes para as mais antigas.")
+            description = "Paginado; por padrão ordenado das mais recentes para as mais antigas. "
+                    + "O filtro `userId` exige login e só vale para o próprio usuário ou para um ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de avaliações"),
+            @ApiResponse(responseCode = "401", description = "Filtro `userId` sem estar logado"),
+            @ApiResponse(responseCode = "403", description = "Filtro `userId` de outro usuário")
+    })
     @GetMapping
-    public ResponseEntity<Page<Review>> list(
+    public ResponseEntity<Page<ReviewResponseDto>> list(
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) String placeId,
             @RequestParam(required = false) String userId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         boolean hasPlace = placeId != null && !placeId.isBlank();
         boolean hasUser = userId != null && !userId.isBlank();
-
-        if (hasPlace && hasUser) {
-            return ResponseEntity.ok(reviewService.findByUserIdAndPlaceId(userId, placeId, pageable));
-        }
-        if (hasPlace) {
-            return ResponseEntity.ok(reviewService.findByPlaceId(placeId, pageable));
-        }
         if (hasUser) {
-            return ResponseEntity.ok(reviewService.findByUserId(userId, pageable));
+            assertCanFilterByUser(jwt, userId);
         }
-        return ResponseEntity.ok(reviewService.findAll(pageable));
+
+        Page<Review> page;
+        if (hasPlace && hasUser) {
+            page = reviewService.findByUserIdAndPlaceId(userId, placeId, pageable);
+        } else if (hasPlace) {
+            page = reviewService.findByPlaceId(placeId, pageable);
+        } else if (hasUser) {
+            page = reviewService.findByUserId(userId, pageable);
+        } else {
+            page = reviewService.findAll(pageable);
+        }
+        return ResponseEntity.ok(page.map(review -> ReviewResponseDto.from(review, viewerId(jwt))));
     }
 
     @Operation(summary = "Busca uma avaliação pelo ID")
@@ -63,8 +76,9 @@ public class ReviewController {
             @ApiResponse(responseCode = "404", description = "Avaliação não encontrada")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<Review> getById(@Parameter(description = "ID da avaliação") @PathVariable String id) {
-        return ResponseEntity.ok(reviewService.findById(id));
+    public ResponseEntity<ReviewResponseDto> getById(@AuthenticationPrincipal Jwt jwt,
+                                                     @Parameter(description = "ID da avaliação") @PathVariable String id) {
+        return ResponseEntity.ok(ReviewResponseDto.from(reviewService.findById(id), viewerId(jwt)));
     }
 
     @Operation(summary = "Cria uma avaliação de acessibilidade para um local",
@@ -77,9 +91,10 @@ public class ReviewController {
             @ApiResponse(responseCode = "429", description = "Limite de avaliações por hora ou por dia atingido")
     })
     @PostMapping
-    public ResponseEntity<Review> create(@AuthenticationPrincipal Jwt jwt,
-                                         @Valid @RequestBody ReviewRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(jwt.getSubject(), request));
+    public ResponseEntity<ReviewResponseDto> create(@AuthenticationPrincipal Jwt jwt,
+                                                    @Valid @RequestBody ReviewRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ReviewResponseDto.from(reviewService.create(jwt.getSubject(), request), jwt.getSubject()));
     }
 
     @Operation(summary = "Atualiza parcialmente uma avaliação",
@@ -90,10 +105,11 @@ public class ReviewController {
             @ApiResponse(responseCode = "404", description = "Avaliação não encontrada")
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<Review> update(@AuthenticationPrincipal Jwt jwt,
-                                         @PathVariable String id,
-                                         @Valid @RequestBody ReviewUpdateRequestDto request) {
-        return ResponseEntity.ok(reviewService.update(id, jwt.getSubject(), isAdmin(jwt), request));
+    public ResponseEntity<ReviewResponseDto> update(@AuthenticationPrincipal Jwt jwt,
+                                                    @PathVariable String id,
+                                                    @Valid @RequestBody ReviewUpdateRequestDto request) {
+        Review updated = reviewService.update(id, jwt.getSubject(), isAdmin(jwt), request);
+        return ResponseEntity.ok(ReviewResponseDto.from(updated, jwt.getSubject()));
     }
 
     @Operation(summary = "Remove uma avaliação",
@@ -126,6 +142,21 @@ public class ReviewController {
                                                       @Valid @RequestBody ReviewReportRequestDto request) {
         reviewReportService.report(id, jwt.getSubject(), request.getReason());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Denúncia registrada"));
+    }
+
+    /** Listar as avaliações de alguém revela o histórico da pessoa: só ela mesma ou um ADMIN podem ver. */
+    private void assertCanFilterByUser(Jwt jwt, String userId) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Faça login para filtrar por usuário");
+        }
+        if (!userId.equals(jwt.getSubject()) && !isAdmin(jwt)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode listar as suas próprias avaliações");
+        }
+    }
+
+    /** As rotas de leitura são públicas: sem token, não há quem esteja vendo. */
+    private static String viewerId(Jwt jwt) {
+        return jwt != null ? jwt.getSubject() : null;
     }
 
     private boolean isAdmin(Jwt jwt) {

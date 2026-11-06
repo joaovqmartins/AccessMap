@@ -2,6 +2,7 @@ package br.com.accessmap.backend.review.controller;
 
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.service.ReviewService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -46,8 +51,19 @@ class ReviewControllerTest {
     @BeforeEach
     void montarMockMvc() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver(),
+                        new AuthenticationPrincipalArgumentResolver())
                 .build();
+    }
+
+    @AfterEach
+    void sair() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void logadoComo(String userId) {
+        Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").subject(userId).build();
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
     }
 
     @Test
@@ -62,6 +78,7 @@ class ReviewControllerTest {
 
     @Test
     void soUserIdListaAsAvaliacoesDoUsuario() throws Exception {
+        logadoComo("u1");
         when(reviewService.findByUserId(eq("u1"), any(Pageable.class))).thenReturn(pagina);
 
         mockMvc.perform(get("/api/reviews?userId=u1")).andExpect(status().isOk());
@@ -72,6 +89,7 @@ class ReviewControllerTest {
 
     @Test
     void placeIdEUserIdJuntosFiltramPelosDois() throws Exception {
+        logadoComo("u1");
         when(reviewService.findByUserIdAndPlaceId(eq("u1"), eq("p1"), any(Pageable.class))).thenReturn(pagina);
 
         mockMvc.perform(get("/api/reviews?placeId=p1&userId=u1")).andExpect(status().isOk());

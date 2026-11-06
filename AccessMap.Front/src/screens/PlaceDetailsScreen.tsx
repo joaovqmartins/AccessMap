@@ -145,7 +145,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  isMine={review.userId === user?.id}
+                  isMine={review.mine}
                   onPress={() => router.push({ pathname: '/avaliacoes/[id]', params: { id: review.id } })}
                 />
               ))}
