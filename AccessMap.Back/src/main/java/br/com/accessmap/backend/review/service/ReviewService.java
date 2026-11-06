@@ -161,12 +161,13 @@ public class ReviewService {
             return;
         }
 
-        Place place = placeService.findByPlaceId(existing.getPlaceId());
-        int others = place.getReviewCount() - 1;
-        double othersAverage = others > 0
-                ? (place.getAverageScore() * place.getReviewCount() - existing.getRating()) / others
-                : 0.0;
-        if (suspicionRules.isRatingOutlier(existing.getAuthorTrustLevel(), newRating, others, othersAverage)) {
+        // Direto das somas: com peso, a média dos outros não dá para reconstruir a partir da média do local
+        RatingTotals totals = ratingTotals(existing.getPlaceId());
+        double weight = reviewTrustCalculator.weightOf(existing.getAuthorTrustLevel());
+        RatingTotals others = new RatingTotals(totals.reviews() - 1,
+                totals.weightedRatings() - existing.getRating() * weight, totals.weights() - weight);
+        if (suspicionRules.isRatingOutlier(
+                existing.getAuthorTrustLevel(), newRating, (int) others.reviews(), others.average())) {
             existing.setSuspicionReason(SuspicionReason.NOTA_DESTOANTE);
         }
     }
@@ -197,8 +198,7 @@ public class ReviewService {
      * incrementalmente — assim o total nunca diverge, mesmo após edições e remoções.
      */
     public void recalculatePlaceAggregates(String placeId) {
-        ReviewRepository.PlaceAggregate aggregate =
-                reviewRepository.aggregateByPlaceId(placeId, ReviewStatus.PUBLICADA);
+        RatingTotals totals = ratingTotals(placeId);
 
         Map<AccessibilityTag, TagStats> tagStats = new EnumMap<>(AccessibilityTag.class);
 
@@ -211,6 +211,26 @@ public class ReviewService {
             }
         });
 
-        placeService.applyAggregates(placeId, aggregate.getReviewCount(), aggregate.getRatingSum(), tagStats);
+        placeService.applyAggregates(placeId, totals.reviews(), totals.average(), tagStats);
+    }
+
+    /** Somas das reviews publicadas, com o peso do nível de cada uma (#27). */
+    private RatingTotals ratingTotals(String placeId) {
+        RatingTotals totals = new RatingTotals(0, 0.0, 0.0);
+        for (ReviewRepository.LevelAggregate row
+                : reviewRepository.aggregateByPlaceIdAndLevel(placeId, ReviewStatus.PUBLICADA)) {
+            double weight = reviewTrustCalculator.weightOf(row.getLevel());
+            totals = new RatingTotals(totals.reviews() + row.getReviewCount(),
+                    totals.weightedRatings() + row.getRatingSum() * weight,
+                    totals.weights() + row.getReviewCount() * weight);
+        }
+        return totals;
+    }
+
+    private record RatingTotals(long reviews, double weightedRatings, double weights) {
+
+        double average() {
+            return weights > 0 ? weightedRatings / weights : 0.0;
+        }
     }
 }

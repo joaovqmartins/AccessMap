@@ -3,6 +3,7 @@ package br.com.accessmap.backend.review.repository;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.enums.TagAssessment;
+import br.com.accessmap.backend.review.enums.TrustLevel;
 import br.com.accessmap.backend.review.model.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,16 +39,18 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
     long countByUserIdAndModerationRemovedAtAfter(String userId, LocalDateTime since);
 
-    @Query("SELECT COUNT(r) AS reviewCount, COALESCE(SUM(r.rating), 0) AS ratingSum FROM Review r " +
-            "WHERE r.placeId = :placeId AND r.status = :status")
-    PlaceAggregate aggregateByPlaceId(String placeId, ReviewStatus status);
+    @Query("SELECT r.authorTrustLevel AS level, COUNT(r) AS reviewCount, SUM(r.rating) AS ratingSum FROM Review r " +
+            "WHERE r.placeId = :placeId AND r.status = :status GROUP BY r.authorTrustLevel")
+    List<LevelAggregate> aggregateByPlaceIdAndLevel(String placeId, ReviewStatus status);
 
     @Query("SELECT KEY(t) AS tag, VALUE(t) AS assessment, COUNT(r) AS total FROM Review r JOIN r.tags t " +
             "WHERE r.placeId = :placeId AND r.status = :status " +
             "GROUP BY KEY(t), VALUE(t)")
     List<TagAssessmentCount> tagStatsByPlaceId(String placeId, ReviewStatus status);
 
-    interface PlaceAggregate {
+    interface LevelAggregate {
+        TrustLevel getLevel();
+
         long getReviewCount();
 
         long getRatingSum();

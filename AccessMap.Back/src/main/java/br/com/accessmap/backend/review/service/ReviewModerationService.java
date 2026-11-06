@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.review.service;
 
+import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.dto.AdminReviewDto;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.model.Review;
@@ -26,6 +27,7 @@ public class ReviewModerationService {
     private final ReviewRepository reviewRepository;
     private final ReviewReportRepository reviewReportRepository;
     private final ReviewService reviewService;
+    private final PlaceService placeService;
 
     public Page<AdminReviewDto> queue(Pageable pageable) {
         return reviewRepository.findBySuspicionReasonIsNotNullAndStatusIn(IN_QUEUE, pageable)
@@ -71,6 +73,14 @@ public class ReviewModerationService {
         review.setSuspicionReason(null);
         review.setModerationRemovedAt(LocalDateTime.now());
         saveAndRecalculate(review);
+    }
+
+    /** A nota guardada não acompanha sozinha uma troca de peso na configuração. Rodar de novo não muda nada. */
+    @Transactional
+    public int recalculateAllPlaces() {
+        List<String> placeIds = placeService.findAllPlaceIds();
+        placeIds.forEach(reviewService::recalculatePlaceAggregates);
+        return placeIds.size();
     }
 
     private Review find(String id) {
