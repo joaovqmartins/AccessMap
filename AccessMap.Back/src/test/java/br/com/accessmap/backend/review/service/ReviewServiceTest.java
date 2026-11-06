@@ -56,6 +56,9 @@ class ReviewServiceTest {
     @Mock
     private ReviewRateLimiter reviewRateLimiter;
 
+    @Mock
+    private ReviewTrustCalculator reviewTrustCalculator;
+
     @InjectMocks
     private ReviewService reviewService;
 
