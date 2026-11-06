@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -157,6 +158,52 @@ class ReviewTrustIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(nivelDaReview(reviewId)).isEqualTo(TrustLevel.NOVA);
+    }
+
+    // ---------- selo na resposta ----------
+
+    private String reviewComNivel(TrustLevel nivel) {
+        Review review = historico(contaAntiga(), ReviewStatus.PUBLICADA, null);
+        review.setAuthorTrustLevel(nivel);
+        return reviewRepository.save(review).getId();
+    }
+
+    @Test
+    void contaConfiavelTemSelo() throws Exception {
+        mockMvc.perform(get("/api/reviews/" + reviewComNivel(TrustLevel.CONFIAVEL)))
+                .andExpect(jsonPath("$.trustBadge").value("CONFIAVEL"));
+    }
+
+    @Test
+    void contaNovaTemSelo() throws Exception {
+        mockMvc.perform(get("/api/reviews/" + reviewComNivel(TrustLevel.NOVA)))
+                .andExpect(jsonPath("$.trustBadge").value("NOVA"));
+    }
+
+    @Test
+    void contaRegularNaoTemSelo() throws Exception {
+        mockMvc.perform(get("/api/reviews/" + reviewComNivel(TrustLevel.REGULAR)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trustBadge").doesNotExist());
+    }
+
+    @Test
+    void contaRestritaNaoApareceNaResposta() throws Exception {
+        String corpo = mockMvc.perform(get("/api/reviews/" + reviewComNivel(TrustLevel.RESTRITA)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trustBadge").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(corpo).doesNotContain("RESTRITA");
+    }
+
+    @Test
+    void aListagemTambemTrazOSelo() throws Exception {
+        String reviewId = reviewComNivel(TrustLevel.CONFIAVEL);
+        String placeId = reviewRepository.findById(reviewId).orElseThrow().getPlaceId();
+
+        mockMvc.perform(get("/api/reviews").param("placeId", placeId))
+                .andExpect(jsonPath("$.content[0].trustBadge").value("CONFIAVEL"));
     }
 
     // ---------- remoção pela moderação ----------
