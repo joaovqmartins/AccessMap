@@ -196,7 +196,7 @@ public class ReviewService {
      * Recalcula os agregados do local a partir das avaliações publicadas, em vez de somar
      * incrementalmente — assim o total nunca diverge, mesmo após edições e remoções.
      */
-    private void recalculatePlaceAggregates(String placeId) {
+    public void recalculatePlaceAggregates(String placeId) {
         ReviewRepository.PlaceAggregate aggregate =
                 reviewRepository.aggregateByPlaceId(placeId, ReviewStatus.PUBLICADA);
 

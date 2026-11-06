@@ -13,7 +13,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,5 +40,46 @@ public class AdminReviewController {
     public ResponseEntity<Page<AdminReviewDto>> queue(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(moderationService.queue(pageable));
+    }
+
+    @Operation(summary = "Restaura uma avaliação oculta (ADMIN)",
+            description = "Volta para PUBLICADA, recalcula a nota do local e não pode mais ser ocultada por denúncias.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Avaliação restaurada"),
+            @ApiResponse(responseCode = "403", description = "Requer perfil ADMIN"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada"),
+            @ApiResponse(responseCode = "409", description = "A avaliação não está oculta")
+    })
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable String id) {
+        moderationService.restore(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Mantém no ar uma avaliação sinalizada (ADMIN)",
+            description = "Tira da fila uma avaliação publicada. Denúncias posteriores ainda podem ocultá-la.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Avaliação mantida"),
+            @ApiResponse(responseCode = "403", description = "Requer perfil ADMIN"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada"),
+            @ApiResponse(responseCode = "409", description = "A avaliação não está aguardando moderação")
+    })
+    @PostMapping("/{id}/keep")
+    public ResponseEntity<Void> keep(@PathVariable String id) {
+        moderationService.keep(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Remove uma avaliação pela moderação (ADMIN)",
+            description = "Soft delete que conta para o nível Restrita do autor.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Avaliação removida"),
+            @ApiResponse(responseCode = "403", description = "Requer perfil ADMIN"),
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada ou já removida")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> remove(@PathVariable String id) {
+        moderationService.remove(id);
+        return ResponseEntity.noContent().build();
     }
 }
