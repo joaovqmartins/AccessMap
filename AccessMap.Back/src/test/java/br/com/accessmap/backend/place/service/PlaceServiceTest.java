@@ -83,12 +83,12 @@ class PlaceServiceTest {
     }
 
     @Test
-    void deveDerivarMediaDaSomaEDaContagem() {
+    void deveGravarAMediaEOTotalDeAvaliacoes() {
         Place existente = Place.builder().placeId("abc").build();
         when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(existente));
         when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        placeService.applyAggregates("abc", 4, 14, semTags());
+        placeService.applyAggregates("abc", 4, 3.5, semTags());
 
         assertThat(existente.getReviewCount()).isEqualTo(4);
         assertThat(existente.getAverageScore()).isEqualTo(3.5);
@@ -101,7 +101,7 @@ class PlaceServiceTest {
         when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.of(existente));
         when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        placeService.applyAggregates("abc", 0, 0, semTags());
+        placeService.applyAggregates("abc", 0, 0.0, semTags());
 
         assertThat(existente.getReviewCount()).isEqualTo(0);
         assertThat(existente.getAverageScore()).isEqualTo(0.0);
@@ -117,7 +117,7 @@ class PlaceServiceTest {
         Map<AccessibilityTag, TagStats> novas = semTags();
         novas.put(AccessibilityTag.RAMPAS_E_ENTRADAS, TagStats.builder().adequadoCount(2L).inadequadoCount(1L).build());
 
-        placeService.applyAggregates("abc", 3, 12, novas);
+        placeService.applyAggregates("abc", 3, 4.0, novas);
 
         assertThat(existente.getTagStats()).containsOnlyKeys(AccessibilityTag.RAMPAS_E_ENTRADAS);
         assertThat(existente.getTagStats().get(AccessibilityTag.RAMPAS_E_ENTRADAS).getAdequadoCount()).isEqualTo(2L);
@@ -129,7 +129,7 @@ class PlaceServiceTest {
         when(placeRepository.findByPlaceId("abc")).thenReturn(Optional.empty());
         when(placeRepository.save(any(Place.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        placeService.applyAggregates("abc", 1, 5, semTags());
+        placeService.applyAggregates("abc", 1, 5.0, semTags());
 
         verify(placeRepository, never()).findByPlaceId("outro");
         verify(placeRepository, org.mockito.Mockito.times(2)).save(any(Place.class));

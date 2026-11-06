@@ -99,14 +99,14 @@ public class PlaceService {
 
     /**
      * Sobrescreve os agregados do local com os totais recalculados a partir das avaliações publicadas.
-     * A média é derivada de soma/contagem para não acumular erro de ponto flutuante.
+     * A média já vem ponderada pela confiabilidade; {@code reviewCount} é o número de avaliações, sem peso.
      */
-    public void applyAggregates(String placeId, long reviewCount, long ratingSum,
+    public void applyAggregates(String placeId, long reviewCount, double averageScore,
                                 Map<AccessibilityTag, TagStats> tagStats) {
         Place place = findOrCreateByPlaceId(placeId);
 
         place.setReviewCount((int) reviewCount);
-        place.setAverageScore(reviewCount > 0 ? (double) ratingSum / reviewCount : 0.0);
+        place.setAverageScore(averageScore);
 
         if (place.getTagStats() == null) {
             place.setTagStats(tagStats);

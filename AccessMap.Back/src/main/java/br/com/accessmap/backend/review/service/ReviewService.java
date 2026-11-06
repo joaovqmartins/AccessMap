@@ -197,8 +197,7 @@ public class ReviewService {
      * incrementalmente — assim o total nunca diverge, mesmo após edições e remoções.
      */
     public void recalculatePlaceAggregates(String placeId) {
-        ReviewRepository.PlaceAggregate aggregate =
-                reviewRepository.aggregateByPlaceId(placeId, ReviewStatus.PUBLICADA);
+        RatingTotals totals = ratingTotals(placeId);
 
         Map<AccessibilityTag, TagStats> tagStats = new EnumMap<>(AccessibilityTag.class);
 
@@ -211,6 +210,26 @@ public class ReviewService {
             }
         });
 
-        placeService.applyAggregates(placeId, aggregate.getReviewCount(), aggregate.getRatingSum(), tagStats);
+        placeService.applyAggregates(placeId, totals.reviews(), totals.average(), tagStats);
+    }
+
+    /** Somas das reviews publicadas, com o peso do nível de cada uma (#27). */
+    private RatingTotals ratingTotals(String placeId) {
+        RatingTotals totals = new RatingTotals(0, 0.0, 0.0);
+        for (ReviewRepository.LevelAggregate row
+                : reviewRepository.aggregateByPlaceIdAndLevel(placeId, ReviewStatus.PUBLICADA)) {
+            double weight = reviewTrustCalculator.weightOf(row.getLevel());
+            totals = new RatingTotals(totals.reviews() + row.getReviewCount(),
+                    totals.weightedRatings() + row.getRatingSum() * weight,
+                    totals.weights() + row.getReviewCount() * weight);
+        }
+        return totals;
+    }
+
+    private record RatingTotals(long reviews, double weightedRatings, double weights) {
+
+        double average() {
+            return weights > 0 ? weightedRatings / weights : 0.0;
+        }
     }
 }

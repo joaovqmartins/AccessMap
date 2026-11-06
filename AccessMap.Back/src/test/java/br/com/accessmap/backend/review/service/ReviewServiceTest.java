@@ -11,6 +11,7 @@ import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.enums.TagAssessment;
+import br.com.accessmap.backend.review.enums.TrustLevel;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.repository.ReviewRepository;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -91,7 +93,12 @@ class ReviewServiceTest {
 
     // Evita repetir o stub das duas consultas de recomputacao em cada teste de escrita.
     private void stubRecalculo(long reviewCount, long ratingSum) {
-        ReviewRepository.PlaceAggregate aggregate = new ReviewRepository.PlaceAggregate() {
+        ReviewRepository.LevelAggregate aggregate = new ReviewRepository.LevelAggregate() {
+            @Override
+            public TrustLevel getLevel() {
+                return TrustLevel.REGULAR;
+            }
+
             @Override
             public long getReviewCount() {
                 return reviewCount;
@@ -102,8 +109,9 @@ class ReviewServiceTest {
                 return ratingSum;
             }
         };
-        lenient().when(reviewRepository.aggregateByPlaceId(anyString(), eq(ReviewStatus.PUBLICADA)))
-                .thenReturn(aggregate);
+        lenient().when(reviewRepository.aggregateByPlaceIdAndLevel(anyString(), eq(ReviewStatus.PUBLICADA)))
+                .thenReturn(reviewCount > 0 ? List.of(aggregate) : List.of());
+        lenient().when(reviewTrustCalculator.weightOf(TrustLevel.REGULAR)).thenReturn(1.0);
         lenient().when(reviewRepository.tagStatsByPlaceId(anyString(), eq(ReviewStatus.PUBLICADA)))
                 .thenReturn(List.of());
     }
@@ -140,7 +148,7 @@ class ReviewServiceTest {
         assertThat(review.getPlaceId()).isEqualTo("place-1");
         assertThat(review.getRating()).isEqualTo(4);
         assertThat(review.getStatus()).isEqualTo(ReviewStatus.PUBLICADA);
-        verify(placeService).applyAggregates(eq("place-1"), eq(1L), eq(4L), any());
+        verify(placeService).applyAggregates(eq("place-1"), eq(1L), eq(4.0), any());
     }
 
     @Test
@@ -225,7 +233,7 @@ class ReviewServiceTest {
         assertThat(atualizado.getRating()).isEqualTo(2);
         assertThat(atualizado.getComment()).isEqualTo("Comentario original");
         assertThat(atualizado.getUpdatedAt()).isNotNull();
-        verify(placeService).applyAggregates(eq("place-1"), eq(1L), eq(2L), any());
+        verify(placeService).applyAggregates(eq("place-1"), eq(1L), eq(2.0), any());
     }
 
     @Test
@@ -286,7 +294,7 @@ class ReviewServiceTest {
         verify(reviewRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(ReviewStatus.REMOVIDA);
         verify(reviewRepository, never()).deleteById(anyString());
-        verify(placeService).applyAggregates(eq("place-1"), eq(0L), eq(0L), any());
+        verify(placeService).applyAggregates(eq("place-1"), eq(0L), eq(0.0), any());
     }
 
     @Test
@@ -296,7 +304,7 @@ class ReviewServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> reviewService.delete("review-1", "user-1", false));
         verify(reviewRepository, never()).save(any());
-        verify(placeService, never()).applyAggregates(anyString(), anyLong(), anyLong(), any());
+        verify(placeService, never()).applyAggregates(anyString(), anyLong(), anyDouble(), any());
     }
 
     @Test
@@ -358,7 +366,7 @@ class ReviewServiceTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<AccessibilityTag, TagStats>> captor = ArgumentCaptor.forClass(Map.class);
-        verify(placeService).applyAggregates(eq("place-1"), eq(3L), eq(11L), captor.capture());
+        verify(placeService).applyAggregates(eq("place-1"), eq(3L), eq(11.0 / 3), captor.capture());
 
         Map<AccessibilityTag, TagStats> stats = captor.getValue();
         assertThat(stats.get(AccessibilityTag.RAMPAS_E_ENTRADAS).getAdequadoCount()).isEqualTo(2L);
