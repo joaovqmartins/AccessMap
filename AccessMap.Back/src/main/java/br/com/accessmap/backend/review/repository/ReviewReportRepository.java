@@ -9,4 +9,6 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Stri
 
     /** Total de denúncias da avaliação; é o que o cálculo de confiabilidade (#28) vai consumir. */
     long countByReviewId(String reviewId);
+
+    long countByReviewIdAndReporterEstablishedTrue(String reviewId);
 }
