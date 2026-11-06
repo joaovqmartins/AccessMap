@@ -161,12 +161,13 @@ public class ReviewService {
             return;
         }
 
-        Place place = placeService.findByPlaceId(existing.getPlaceId());
-        int others = place.getReviewCount() - 1;
-        double othersAverage = others > 0
-                ? (place.getAverageScore() * place.getReviewCount() - existing.getRating()) / others
-                : 0.0;
-        if (suspicionRules.isRatingOutlier(existing.getAuthorTrustLevel(), newRating, others, othersAverage)) {
+        // Direto das somas: com peso, a média dos outros não dá para reconstruir a partir da média do local
+        RatingTotals totals = ratingTotals(existing.getPlaceId());
+        double weight = reviewTrustCalculator.weightOf(existing.getAuthorTrustLevel());
+        RatingTotals others = new RatingTotals(totals.reviews() - 1,
+                totals.weightedRatings() - existing.getRating() * weight, totals.weights() - weight);
+        if (suspicionRules.isRatingOutlier(
+                existing.getAuthorTrustLevel(), newRating, (int) others.reviews(), others.average())) {
             existing.setSuspicionReason(SuspicionReason.NOTA_DESTOANTE);
         }
     }
