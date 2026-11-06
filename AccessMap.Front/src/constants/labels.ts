@@ -1,10 +1,27 @@
-import type { AccessibilityNeed, AccessibilityTag, ReportReason, TagAssessment } from '../api/types';
+import type {
+  AccessibilityNeed,
+  AccessibilityTag,
+  AdminReview,
+  ReportReason,
+  SuspicionReason,
+  TagAssessment,
+} from '../api/types';
 
 export const NEED_LABELS: Record<AccessibilityNeed, string> = {
   MOBILIDADE_REDUZIDA: 'Mobilidade reduzida',
   DEFICIENCIA_VISUAL: 'Deficiência visual',
   DEFICIENCIA_AUDITIVA: 'Deficiência auditiva',
   OUTROS: 'Outras necessidades',
+};
+
+export const MODERATION_STATUS_LABELS: Record<AdminReview['status'], string> = {
+  OCULTA: 'Oculta',
+  PUBLICADA: 'Publicada',
+};
+
+export const SUSPICION_REASON_LABELS: Record<SuspicionReason, string> = {
+  DENUNCIAS: 'Denúncias',
+  NOTA_DESTOANTE: 'Nota destoante',
 };
 
 export const TAG_LABELS: Record<AccessibilityTag, string> = {

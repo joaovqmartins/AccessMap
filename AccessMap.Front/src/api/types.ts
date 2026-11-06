@@ -106,6 +106,22 @@ export interface Review {
   mine: boolean;
 }
 
+export type SuspicionReason = 'DENUNCIAS' | 'NOTA_DESTOANTE';
+
+/** Item da fila de moderação, só para ADMIN. Sem `reviewerNeeds`: é sensível e não ajuda a julgar. */
+export interface AdminReview {
+  id: string;
+  placeId: string;
+  userId: string;
+  rating: number;
+  comment: string | null;
+  tags: ReviewTags;
+  status: Extract<ReviewStatus, 'PUBLICADA' | 'OCULTA'>;
+  suspicionReason: SuspicionReason;
+  reportCount: number;
+  createdAt: string;
+}
+
 // Formato de Page serializado como PagedModel pelo backend
 export interface Paged<T> {
   content: T[];
