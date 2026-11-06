@@ -31,6 +31,10 @@ public class ReviewReport {
     @Column(nullable = false)
     private ReportReason reason;
 
+    /** Quem denunciou já tinha passado do prazo de conta nova: só essas denúncias ocultam a review. */
+    @Column(nullable = false)
+    private boolean reporterEstablished;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 }

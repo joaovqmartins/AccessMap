@@ -3,6 +3,7 @@ package br.com.accessmap.backend.review.model;
 import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
+import br.com.accessmap.backend.review.enums.SuspicionReason;
 import br.com.accessmap.backend.review.enums.TagAssessment;
 import br.com.accessmap.backend.review.enums.TrustLevel;
 import jakarta.persistence.*;
@@ -65,6 +66,13 @@ public class Review {
 
     /** Preenchido só quando um ADMIN remove a review de outra pessoa: conta para o nível Restrita. */
     private LocalDateTime moderationRemovedAt;
+
+    /** Preenchido enquanto a review está na fila do ADMIN. */
+    @Enumerated(EnumType.STRING)
+    private SuspicionReason suspicionReason;
+
+    /** Preenchido quando o ADMIN restaura: denúncias não ocultam de novo. */
+    private LocalDateTime moderationRestoredAt;
 
     private LocalDateTime createdAt;
 

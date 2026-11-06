@@ -51,6 +51,10 @@ accessmap:
       weight-new: 0.5
       weight-regular: 1.0
       weight-trusted: 1.5
+    suspicion:
+      reports-to-hide: 3
+      rating-gap: 3
+      min-place-reviews: 5
 
 ---
 # Le o .env da raiz (rodando de AccessMap.Back/ ou da raiz). Variaveis de ambiente reais tem prioridade.

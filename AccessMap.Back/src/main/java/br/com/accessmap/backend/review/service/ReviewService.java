@@ -2,12 +2,15 @@ package br.com.accessmap.backend.review.service;
 
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.service.UserService;
+import br.com.accessmap.backend.place.model.Place;
 import br.com.accessmap.backend.place.model.TagStats;
 import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.dto.ReviewRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
+import br.com.accessmap.backend.review.enums.SuspicionReason;
+import br.com.accessmap.backend.review.enums.TrustLevel;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class ReviewService {
     private final UserService userService;
     private final ReviewRateLimiter reviewRateLimiter;
     private final ReviewTrustCalculator reviewTrustCalculator;
+    private final ReviewSuspicionRules suspicionRules;
 
     public Page<Review> findAll(Pageable pageable) {
         return reviewRepository.findByStatus(ReviewStatus.PUBLICADA, pageable);
@@ -67,9 +71,20 @@ public class ReviewService {
             );
         }
 
+        if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(
+                userId, request.getPlaceId(), ReviewStatus.OCULTA)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Sua avaliação deste local está em análise."
+            );
+        }
+
         reviewRateLimiter.check(author);
 
-        placeService.findOrCreateByPlaceId(request.getPlaceId());
+        Place place = placeService.findOrCreateByPlaceId(request.getPlaceId());
+        TrustLevel level = reviewTrustCalculator.levelOf(author);
+        boolean outlier = suspicionRules.isRatingOutlier(
+                level, request.getRating(), place.getReviewCount(), place.getAverageScore());
 
         Review review = Review.builder()
                 .userId(userId)
@@ -81,7 +96,8 @@ public class ReviewService {
                         ? null
                         : new HashSet<>(author.getAccessibilityNeeds()))
                 .status(ReviewStatus.PUBLICADA)
-                .authorTrustLevel(reviewTrustCalculator.levelOf(author))
+                .authorTrustLevel(level)
+                .suspicionReason(outlier ? SuspicionReason.NOTA_DESTOANTE : null)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -108,6 +124,8 @@ public class ReviewService {
             );
         }
 
+        flagIfEditedToOutlier(existing, request.getRating());
+
         if (request.getRating() != null) existing.setRating(request.getRating());
         if (request.getComment() != null) existing.setComment(request.getComment());
         if (request.getTags() != null) existing.setTags(request.getTags());
@@ -132,6 +150,37 @@ public class ReviewService {
         reviewRepository.save(existing);
 
         recalculatePlaceAggregates(existing.getPlaceId());
+    }
+
+    /** Sem isto, uma conta nova publicaria uma nota comum e editaria depois para escapar da checagem. */
+    private void flagIfEditedToOutlier(Review existing, Integer newRating) {
+        boolean candidate = newRating != null && !newRating.equals(existing.getRating())
+                && existing.getSuspicionReason() == null
+                && existing.getAuthorTrustLevel() == TrustLevel.NOVA;
+        if (!candidate) {
+            return;
+        }
+
+        Place place = placeService.findByPlaceId(existing.getPlaceId());
+        int others = place.getReviewCount() - 1;
+        double othersAverage = others > 0
+                ? (place.getAverageScore() * place.getReviewCount() - existing.getRating()) / others
+                : 0.0;
+        if (suspicionRules.isRatingOutlier(existing.getAuthorTrustLevel(), newRating, others, othersAverage)) {
+            existing.setSuspicionReason(SuspicionReason.NOTA_DESTOANTE);
+        }
+    }
+
+    /** Sai da nota do local e entra na fila do ADMIN. Dois envios simultâneos podem chegar aqui: a segunda chamada não faz nada. */
+    @Transactional
+    public void hideForReports(String id) {
+        reviewRepository.findByIdAndStatus(id, ReviewStatus.PUBLICADA).ifPresent(review -> {
+            review.setStatus(ReviewStatus.OCULTA);
+            review.setSuspicionReason(SuspicionReason.DENUNCIAS);
+            review.setUpdatedAt(LocalDateTime.now());
+            reviewRepository.save(review);
+            recalculatePlaceAggregates(review.getPlaceId());
+        });
     }
 
     private void assertOwnerOrAdmin(Review review, String userId, boolean isAdmin) {

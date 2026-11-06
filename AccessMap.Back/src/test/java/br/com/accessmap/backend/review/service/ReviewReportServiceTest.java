@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.review.service;
 
+import br.com.accessmap.backend.identity.service.UserService;
 import br.com.accessmap.backend.review.enums.ReportReason;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.model.ReviewReport;
@@ -29,6 +30,12 @@ class ReviewReportServiceTest {
 
     @Mock
     private ReviewService reviewService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private ReviewSuspicionRules suspicionRules;
 
     @InjectMocks
     private ReviewReportService reviewReportService;
