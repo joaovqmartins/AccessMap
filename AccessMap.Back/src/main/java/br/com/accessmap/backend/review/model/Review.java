@@ -4,6 +4,7 @@ import br.com.accessmap.backend.identity.enums.AccessibilityNeed;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
 import br.com.accessmap.backend.review.enums.TagAssessment;
+import br.com.accessmap.backend.review.enums.TrustLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,6 +56,15 @@ public class Review {
     @Column(nullable = false)
     @Builder.Default
     private ReviewStatus status = ReviewStatus.PUBLICADA;
+
+    /** Nível da conta quando a review foi criada: não muda depois, para não recalcular notas antigas. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private TrustLevel authorTrustLevel = TrustLevel.REGULAR;
+
+    /** Preenchido só quando um ADMIN remove a review de outra pessoa: conta para o nível Restrita. */
+    private LocalDateTime moderationRemovedAt;
 
     private LocalDateTime createdAt;
 
