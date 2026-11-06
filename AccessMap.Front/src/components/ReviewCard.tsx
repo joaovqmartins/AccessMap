@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { AccessibilityTag, Review } from '../api/types';
-import { ASSESSMENT_LABELS, NEED_LABELS, TAG_LABELS } from '../constants/labels';
+import { ASSESSMENT_LABELS, NEED_LABELS, TAG_LABELS, TRUST_BADGE_LABELS } from '../constants/labels';
 import { assessmentColors, colors, spacing } from '../constants/theme';
 import StarRating from './StarRating';
 
@@ -27,6 +27,12 @@ export default function ReviewCard({ review, isMine, onPress }: Props) {
         <StarRating value={review.rating} size={16} />
         <Text style={styles.author}>{isMine ? 'Sua avaliação' : 'Usuário'} · {date}</Text>
       </View>
+
+      {!!review.trustBadge && (
+        <Text style={[styles.badge, review.trustBadge === 'CONFIAVEL' && styles.badgeTrusted]}>
+          {TRUST_BADGE_LABELS[review.trustBadge]}
+        </Text>
+      )}
 
       {!!review.comment && <Text style={styles.comment}>{review.comment}</Text>}
 
@@ -62,6 +68,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   author: { fontSize: 13, color: colors.textMuted },
+  badge: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: spacing.xs },
+  badgeTrusted: { color: colors.success },
   comment: { fontSize: 15, color: colors.text, marginTop: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm },
   chip: {
