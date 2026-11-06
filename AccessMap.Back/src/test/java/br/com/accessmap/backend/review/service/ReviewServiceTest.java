@@ -59,6 +59,9 @@ class ReviewServiceTest {
     @Mock
     private ReviewTrustCalculator reviewTrustCalculator;
 
+    @Mock
+    private ReviewSuspicionRules suspicionRules;
+
     @InjectMocks
     private ReviewService reviewService;
 
