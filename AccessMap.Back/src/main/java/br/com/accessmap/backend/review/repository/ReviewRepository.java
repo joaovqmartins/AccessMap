@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +27,9 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     boolean existsByUserIdAndPlaceIdAndStatus(String userId, String placeId, ReviewStatus status);
 
     Optional<Review> findByIdAndStatus(String id, ReviewStatus status);
+
+    /** Fila de moderação: {@code suspicionReason} preenchido é o que coloca a review nela. */
+    Page<Review> findBySuspicionReasonIsNotNullAndStatusIn(Collection<ReviewStatus> statuses, Pageable pageable);
 
     /** Avaliações criadas pelo usuário desde {@code since}, em qualquer status: excluir e recriar conta. */
     long countByUserIdAndCreatedAtAfter(String userId, LocalDateTime since);
