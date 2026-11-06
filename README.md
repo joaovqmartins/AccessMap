@@ -91,6 +91,23 @@ npx expo-doctor     # versões compatíveis com o SDK
 
 As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
 
+### Testes e2e
+
+Testam o app web de verdade, com cliques reais, usando o [Playwright](https://playwright.dev). Cobrem o fluxo de confiabilidade: selo, denúncias, fila de moderação e acesso do ADMIN.
+
+Com o backend e o `npm run web` rodando:
+
+```bash
+cd AccessMap.Front
+npx playwright install chromium   # só na primeira vez
+npm run e2e
+```
+
+- Os prints ficam em `AccessMap.Front/e2e-results/prints/`, fora do git.
+- Os testes usam o banco de desenvolvimento: criam contas e locais novos a cada execução, e ajustam direto no banco o que não dá para criar pela tela (idade da conta e papel ADMIN). Outro banco: `E2E_DATABASE_URL`. Outra API: `E2E_API_URL`.
+- Cobrem a versão web. O `Alert` e o layout do celular se conferem no Expo Go.
+- Ainda não rodam no CI, porque precisam do backend e do app no ar (ver #103).
+
 ## 🔑 Chave da Google Maps Platform
 
 A busca de locais usa a **Places API (New)**. Cada integrante gera a própria chave, sem custo dentro da cota gratuita:

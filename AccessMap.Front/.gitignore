@@ -5,6 +5,9 @@ node_modules/
 
 # Expo
 .expo/
+
+# Resultados e prints do Playwright
+e2e-results/
 dist/
 web-build/
 expo-env.d.ts
