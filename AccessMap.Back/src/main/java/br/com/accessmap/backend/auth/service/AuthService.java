@@ -48,7 +48,9 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenResponseDto register(RegisterRequestDto request) {
+    public TokenResponseDto register(RegisterRequestDto request, String ip) {
+        authAttemptService.assertRegisterAllowed(ip);
+
         UserRequestDto userRequest = new UserRequestDto();
         userRequest.setName(request.getName());
         userRequest.setEmail(request.getEmail());
@@ -57,8 +59,15 @@ public class AuthService {
         userRequest.setAge(request.getAge());
         userRequest.setAccessibilityNeeds(request.getAccessibilityNeeds());
 
-        User created = userService.create(userRequest);
-        return issueTokens(created);
+        try {
+            return issueTokens(userService.create(userRequest));
+        } catch (ResponseStatusException e) {
+            // O 400 de "já em uso" revela quem tem conta: o limite impede varrer números em massa
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                authAttemptService.recordRegisterFailure(ip);
+            }
+            throw e;
+        }
     }
 
     @Transactional
