@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -43,11 +44,13 @@ public class AuthController {
     @Operation(summary = "Autentica com telefone e senha")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tokens emitidos"),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas"),
+            @ApiResponse(responseCode = "429", description = "Muitas tentativas falhas por telefone ou IP")
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto request,
+                                                  HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.login(request, httpRequest.getRemoteAddr()));
     }
 
     @Operation(summary = "Troca um refresh token válido por um novo par de tokens",
