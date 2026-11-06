@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -188,6 +189,9 @@ export default function ProfileScreen() {
             <View style={styles.actions}>
               <Button title="Editar perfil" onPress={startEditing} />
               <Button title="Alterar senha" variant="secondary" onPress={startChangingPassword} />
+              {user.role === 'ADMIN' && (
+                <Button title="Moderação" variant="secondary" onPress={() => router.push('/moderacao')} />
+              )}
               <Button title="Sair da conta" variant="secondary" onPress={signOut} />
             </View>
           </>

@@ -13,7 +13,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === 'loading') {
     return (
@@ -31,6 +31,10 @@ function RootNavigator() {
         <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
         <Stack.Screen name="locais/[placeId]/avaliar" options={{ title: 'Avaliar local' }} />
         <Stack.Screen name="avaliacoes/[id]/editar" options={{ title: 'Editar avaliação' }} />
+      </Stack.Protected>
+      {/* Quem não é ADMIN e abre o endereço volta para a Home; o backend também responde 403 */}
+      <Stack.Protected guard={user?.role === 'ADMIN'}>
+        <Stack.Screen name="moderacao" options={{ title: 'Moderação' }} />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
