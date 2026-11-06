@@ -5,6 +5,7 @@ import type {
   ReportReason,
   SuspicionReason,
   TagAssessment,
+  TrustBadge,
 } from '../api/types';
 
 export const NEED_LABELS: Record<AccessibilityNeed, string> = {
@@ -46,6 +47,12 @@ export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
   CONTEUDO_OFENSIVO: 'Conteúdo ofensivo',
   SPAM: 'Propaganda ou spam',
   OUTRO: 'Outro motivo',
+};
+
+// O nível é o da conta quando avaliou: "Avaliado por" continua certo anos depois
+export const TRUST_BADGE_LABELS: Record<TrustBadge, string> = {
+  NOVA: 'Avaliado por conta nova',
+  CONFIAVEL: '✓ Avaliador confiável',
 };
 
 // Ordem de exibição (mesma dos enums do backend)
