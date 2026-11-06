@@ -4,6 +4,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(ReviewRateLimitProperties.class)
+@EnableConfigurationProperties({ReviewRateLimitProperties.class, ReviewTrustProperties.class})
 public class ReviewConfig {
 }

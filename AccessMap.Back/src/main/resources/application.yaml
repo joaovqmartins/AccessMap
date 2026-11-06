@@ -41,6 +41,16 @@ accessmap:
       new-account-per-hour: ${REVIEW_LIMIT_NEW_ACCOUNT_PER_HOUR:3}
       new-account-per-day: ${REVIEW_LIMIT_NEW_ACCOUNT_PER_DAY:10}
       new-account-period: ${REVIEW_LIMIT_NEW_ACCOUNT_PERIOD:7d}
+    # Regras da #27. Trocar um peso aqui nao exige migrar dados: a review guarda o nivel, nao o peso.
+    trust:
+      trusted-min-age: 30d
+      trusted-min-published: 5
+      moderation-window: 90d
+      restricted-removals: 2
+      weight-restricted: 0.25
+      weight-new: 0.5
+      weight-regular: 1.0
+      weight-trusted: 1.5
 
 ---
 # Le o .env da raiz (rodando de AccessMap.Back/ ou da raiz). Variaveis de ambiente reais tem prioridade.

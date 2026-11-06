@@ -31,6 +31,7 @@ public class ReviewService {
     private final PlaceService placeService;
     private final UserService userService;
     private final ReviewRateLimiter reviewRateLimiter;
+    private final ReviewTrustCalculator reviewTrustCalculator;
 
     public Page<Review> findAll(Pageable pageable) {
         return reviewRepository.findByStatus(ReviewStatus.PUBLICADA, pageable);
@@ -80,6 +81,7 @@ public class ReviewService {
                         ? null
                         : new HashSet<>(author.getAccessibilityNeeds()))
                 .status(ReviewStatus.PUBLICADA)
+                .authorTrustLevel(reviewTrustCalculator.levelOf(author))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -123,6 +125,9 @@ public class ReviewService {
         assertOwnerOrAdmin(existing, userId, isAdmin);
 
         existing.setStatus(ReviewStatus.REMOVIDA);
+        if (!existing.getUserId().equals(userId)) {
+            existing.setModerationRemovedAt(LocalDateTime.now());
+        }
         existing.setUpdatedAt(LocalDateTime.now());
         reviewRepository.save(existing);
 
