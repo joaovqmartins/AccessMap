@@ -127,7 +127,7 @@ public class ReviewController {
 
     @Operation(summary = "Denuncia uma avaliação",
             description = "Quem denuncia é o usuário autenticado e não aparece em nenhuma resposta da API. "
-                    + "A denúncia só fica registrada: não oculta a avaliação nem muda a nota do local.")
+                    + "Com 3 denúncias de contas com 7 dias ou mais, a avaliação é ocultada e vai para a moderação.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Denúncia registrada"),
             @ApiResponse(responseCode = "400", description = "Motivo ausente ou inexistente"),
