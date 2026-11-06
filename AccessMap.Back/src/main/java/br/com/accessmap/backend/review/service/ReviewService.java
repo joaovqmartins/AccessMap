@@ -8,6 +8,7 @@ import br.com.accessmap.backend.review.dto.ReviewRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewUpdateRequestDto;
 import br.com.accessmap.backend.review.enums.AccessibilityTag;
 import br.com.accessmap.backend.review.enums.ReviewStatus;
+import br.com.accessmap.backend.review.enums.SuspicionReason;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,14 @@ public class ReviewService {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Você já avaliou este local. Edite sua avaliação existente."
+            );
+        }
+
+        if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(
+                userId, request.getPlaceId(), ReviewStatus.OCULTA)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Sua avaliação deste local está em análise."
             );
         }
 
@@ -132,6 +141,18 @@ public class ReviewService {
         reviewRepository.save(existing);
 
         recalculatePlaceAggregates(existing.getPlaceId());
+    }
+
+    /** Sai da nota do local e entra na fila do ADMIN. Dois envios simultâneos podem chegar aqui: a segunda chamada não faz nada. */
+    @Transactional
+    public void hideForReports(String id) {
+        reviewRepository.findByIdAndStatus(id, ReviewStatus.PUBLICADA).ifPresent(review -> {
+            review.setStatus(ReviewStatus.OCULTA);
+            review.setSuspicionReason(SuspicionReason.DENUNCIAS);
+            review.setUpdatedAt(LocalDateTime.now());
+            reviewRepository.save(review);
+            recalculatePlaceAggregates(review.getPlaceId());
+        });
     }
 
     private void assertOwnerOrAdmin(Review review, String userId, boolean isAdmin) {
