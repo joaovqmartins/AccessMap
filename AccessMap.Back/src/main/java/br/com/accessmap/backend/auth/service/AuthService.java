@@ -23,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final RefreshTokenService refreshTokenService;
+    private final AuthAttemptService authAttemptService;
 
     /**
      * Hash de uma senha que ninguém tem. Quando o telefone não existe, comparamos contra ele
@@ -35,17 +36,21 @@ public class AuthService {
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        TokenService tokenService,
-                       RefreshTokenService refreshTokenService) {
+                       RefreshTokenService refreshTokenService,
+                       AuthAttemptService authAttemptService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.refreshTokenService = refreshTokenService;
+        this.authAttemptService = authAttemptService;
         this.dummyHash = passwordEncoder.encode("senha-inexistente-para-tempo-constante");
     }
 
     @Transactional
-    public TokenResponseDto register(RegisterRequestDto request) {
+    public TokenResponseDto register(RegisterRequestDto request, String ip) {
+        authAttemptService.assertRegisterAllowed(ip);
+
         UserRequestDto userRequest = new UserRequestDto();
         userRequest.setName(request.getName());
         userRequest.setEmail(request.getEmail());
@@ -54,21 +59,32 @@ public class AuthService {
         userRequest.setAge(request.getAge());
         userRequest.setAccessibilityNeeds(request.getAccessibilityNeeds());
 
-        User created = userService.create(userRequest);
-        return issueTokens(created);
+        try {
+            return issueTokens(userService.create(userRequest));
+        } catch (ResponseStatusException e) {
+            // O 400 de "já em uso" revela quem tem conta: o limite impede varrer números em massa
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                authAttemptService.recordRegisterFailure(ip);
+            }
+            throw e;
+        }
     }
 
     @Transactional
-    public TokenResponseDto login(LoginRequestDto request) {
+    public TokenResponseDto login(LoginRequestDto request, String ip) {
+        authAttemptService.assertLoginAllowed(request.getPhone(), ip);
+
         User user = userRepository.findByPhone(request.getPhone()).orElse(null);
 
         String storedHash = user != null ? user.getPassword() : dummyHash;
         boolean matches = passwordEncoder.matches(request.getPassword(), storedHash);
 
         if (user == null || !matches) {
+            authAttemptService.recordLoginFailure(request.getPhone(), ip);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
 
+        authAttemptService.clearLoginFailures(request.getPhone());
         return issueTokens(user);
     }
 
