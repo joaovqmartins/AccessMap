@@ -174,8 +174,8 @@ class AuthRateLimitIntegrationTest extends AbstractIntegrationTest {
     void cadastroComDadosEmUsoBloqueiaOIp() throws Exception {
         String existente = contaNova();
         String ip = ipUnico();
-        cadastro(existente, ip).andExpect(status().isBadRequest());
-        cadastro(existente, ip).andExpect(status().isBadRequest());
+        cadastro(existente, ip).andExpect(status().isConflict());
+        cadastro(existente, ip).andExpect(status().isConflict());
 
         cadastro(telefoneUnico(), ip).andExpect(status().isTooManyRequests());
         cadastro(telefoneUnico(), ipUnico()).andExpect(status().isCreated());

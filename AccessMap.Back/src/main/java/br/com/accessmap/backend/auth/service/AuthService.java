@@ -62,8 +62,8 @@ public class AuthService {
         try {
             return issueTokens(userService.create(userRequest));
         } catch (ResponseStatusException e) {
-            // O 400 de "já em uso" revela quem tem conta: o limite impede varrer números em massa
-            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+            // O 409 de "já em uso" revela quem tem conta: o limite impede varrer números em massa
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
                 authAttemptService.recordRegisterFailure(ip);
             }
             throw e;

@@ -30,6 +30,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReviewService {
 
+    public static final String LOCAL_JA_AVALIADO = "Você já avaliou este local. Edite sua avaliação existente.";
+
     private final ReviewRepository reviewRepository;
     private final PlaceService placeService;
     private final UserService userService;
@@ -65,10 +67,7 @@ public class ReviewService {
 
         if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(
                 userId, request.getPlaceId(), ReviewStatus.PUBLICADA)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Você já avaliou este local. Edite sua avaliação existente."
-            );
+            throw new ResponseStatusException(HttpStatus.CONFLICT, LOCAL_JA_AVALIADO);
         }
 
         if (reviewRepository.existsByUserIdAndPlaceIdAndStatus(

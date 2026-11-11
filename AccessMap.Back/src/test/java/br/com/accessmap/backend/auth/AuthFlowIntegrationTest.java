@@ -98,7 +98,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(cadastroValido(telefone))))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.mensagem").value("Telefone já está em uso"));
     }
 
