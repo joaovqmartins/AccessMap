@@ -3,6 +3,9 @@ spring:
     show-sql: false
 
 accessmap:
+  # Nenhum job agendado roda nos testes: eles chamam os jobs direto quando precisam.
+  scheduling:
+    enabled: false
   auth:
     # Os testes saem todos do mesmo IP: sem isso, as falhas de uma classe bloqueariam a outra.
     rate-limit:
