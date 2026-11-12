@@ -21,7 +21,8 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, AuthRateLimitProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, AuthRateLimitProperties.class,
+        RefreshTokenCleanupProperties.class})
 public class SecurityConfig {
 
     @Bean
