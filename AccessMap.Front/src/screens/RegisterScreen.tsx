@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
+import { PASSWORD_MAX_BYTES, PASSWORD_TOO_LONG, TEXT_MAX, utf8Length } from '../constants/limits';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
 import { authStyles as styles } from './LoginScreen';
 
@@ -28,6 +29,7 @@ export default function RegisterScreen() {
     if (!name.trim()) next.name = 'Informe seu nome';
     if (!isValidPhone(phone)) next.phone = 'Informe um telefone com DDD (10 ou 11 dígitos)';
     if (password.length < 8) next.password = 'A senha deve ter no mínimo 8 caracteres';
+    else if (utf8Length(password) > PASSWORD_MAX_BYTES) next.password = PASSWORD_TOO_LONG;
     return next;
   }
 
@@ -67,6 +69,7 @@ export default function RegisterScreen() {
             label="Nome"
             value={name}
             onChangeText={setName}
+            maxLength={TEXT_MAX}
             autoComplete="name"
             textContentType="name"
             error={errors.name}
@@ -85,6 +88,7 @@ export default function RegisterScreen() {
             label="Senha"
             value={password}
             onChangeText={setPassword}
+            maxLength={PASSWORD_MAX_BYTES}
             secureTextEntry
             autoComplete="new-password"
             textContentType="newPassword"
