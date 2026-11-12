@@ -19,6 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
+    public static final String TELEFONE_EM_USO = "Telefone já está em uso";
+    public static final String EMAIL_EM_USO = "E-mail já está em uso";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
@@ -38,10 +41,10 @@ public class UserService {
         String email = isBlank(request.getEmail()) ? null : request.getEmail();
 
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone já está em uso");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, TELEFONE_EM_USO);
         }
         if (email != null && userRepository.existsByEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, EMAIL_EM_USO);
         }
 
         User user = User.builder()
@@ -63,10 +66,10 @@ public class UserService {
         validateUpdatableFields(request);
 
         if (request.getPhone() != null && userRepository.existsByPhoneExcludingId(request.getPhone(), id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone já está em uso");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, TELEFONE_EM_USO);
         }
         if (request.getEmail() != null && userRepository.existsByEmailExcludingId(request.getEmail(), id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já está em uso");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, EMAIL_EM_USO);
         }
 
         boolean passwordChanged = request.getPassword() != null;

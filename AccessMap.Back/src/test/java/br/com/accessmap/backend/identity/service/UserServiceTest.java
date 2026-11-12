@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -106,7 +107,9 @@ class UserServiceTest {
         when(userRepository.existsByPhone("11999999999")).thenReturn(false);
         when(userRepository.existsByEmail("maria@email.com")).thenReturn(true);
 
-        assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(ex.getReason()).isEqualTo(UserService.EMAIL_EM_USO);
         verify(userRepository, never()).save(any());
     }
 
@@ -114,7 +117,9 @@ class UserServiceTest {
     void deveRejeitarCriacaoComTelefoneJaCadastrado() {
         when(userRepository.existsByPhone("11999999999")).thenReturn(true);
 
-        assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
+        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(ex.getReason()).isEqualTo(UserService.TELEFONE_EM_USO);
         verify(userRepository, never()).save(any());
     }
 
@@ -145,7 +150,9 @@ class UserServiceTest {
         UserRequestDto dto = new UserRequestDto();
         dto.setPhone("11977776666");
 
-        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(ex.getReason()).isEqualTo(UserService.TELEFONE_EM_USO);
         verify(userRepository, never()).save(any());
     }
 
@@ -190,7 +197,9 @@ class UserServiceTest {
         UserRequestDto dto = new UserRequestDto();
         dto.setEmail("novo@email.com");
 
-        assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.update("1", dto));
+        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(ex.getReason()).isEqualTo(UserService.EMAIL_EM_USO);
     }
 
     @Test
