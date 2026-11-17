@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { usersApi } from '../api/users';
+import { PASSWORD_MAX_BYTES, PASSWORD_TOO_LONG, utf8Length } from '../constants/limits';
 import { spacing } from '../constants/theme';
 import { notify } from '../utils/dialog';
 import Button from './Button';
@@ -30,6 +31,7 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
     const next: Partial<Record<Field, string>> = {};
     if (!currentPassword) next.currentPassword = 'Informe sua senha atual';
     if (password.length < 8) next.password = 'A nova senha deve ter no mínimo 8 caracteres';
+    else if (utf8Length(password) > PASSWORD_MAX_BYTES) next.password = PASSWORD_TOO_LONG;
     else if (password === currentPassword) next.password = 'A nova senha deve ser diferente da atual';
     if (confirmation !== password) next.confirmation = 'As senhas não conferem';
     return next;
@@ -65,6 +67,7 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
         label="Senha atual"
         value={currentPassword}
         onChangeText={setCurrentPassword}
+        maxLength={PASSWORD_MAX_BYTES}
         secureTextEntry
         autoComplete="current-password"
         textContentType="password"
@@ -74,6 +77,7 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
         label="Nova senha"
         value={password}
         onChangeText={setPassword}
+        maxLength={PASSWORD_MAX_BYTES}
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"
@@ -84,6 +88,7 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
         label="Confirme a nova senha"
         value={confirmation}
         onChangeText={setConfirmation}
+        maxLength={PASSWORD_MAX_BYTES}
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"

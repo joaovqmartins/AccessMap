@@ -11,6 +11,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import StarRatingInput from '../components/StarRatingInput';
 import TagAssessmentPicker from '../components/TagAssessmentPicker';
 import TextField from '../components/TextField';
+import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
 
 type Props =
@@ -135,6 +136,7 @@ export default function ReviewFormScreen(props: Props) {
                 label="Comentário (opcional)"
                 value={comment}
                 onChangeText={setComment}
+                maxLength={TEXT_MAX}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"

@@ -12,6 +12,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import NeedsSelector from '../components/NeedsSelector';
 import TextField from '../components/TextField';
 import { NEED_LABELS } from '../constants/labels';
+import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
 
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
         ) : mode === 'editing' && form ? (
           <View style={styles.section}>
             <ErrorMessage message={formError} />
-            <TextField label="Nome" value={form.name} onChangeText={(v) => set('name', v)} autoComplete="name" error={errors.name} />
+            <TextField label="Nome" value={form.name} onChangeText={(v) => set('name', v)} maxLength={TEXT_MAX} autoComplete="name" error={errors.name} />
             <TextField
               label="Telefone"
               value={formatPhone(form.phone)}
@@ -138,6 +139,7 @@ export default function ProfileScreen() {
               label="E-mail (opcional)"
               value={form.email}
               onChangeText={(v) => set('email', v)}
+              maxLength={TEXT_MAX}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
