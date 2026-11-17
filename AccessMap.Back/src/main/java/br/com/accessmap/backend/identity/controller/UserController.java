@@ -40,7 +40,8 @@ public class UserController {
                     + "A troca de senha encerra todas as sessões (refresh tokens) do usuário.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Usuário atualizado"),
-            @ApiResponse(responseCode = "400", description = "E-mail já em uso ou senha atual incorreta")
+            @ApiResponse(responseCode = "400", description = "Campo inválido ou senha atual incorreta"),
+            @ApiResponse(responseCode = "409", description = "Telefone ou e-mail já em uso")
     })
     @PatchMapping("/me")
     public ResponseEntity<User> updateMe(@AuthenticationPrincipal Jwt jwt,

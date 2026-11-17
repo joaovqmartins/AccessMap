@@ -34,7 +34,8 @@ public class AuthController {
     @Operation(summary = "Cadastra um usuário e já devolve os tokens de acesso")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Usuário criado e autenticado"),
-            @ApiResponse(responseCode = "400", description = "Campo inválido, telefone ou e-mail já em uso"),
+            @ApiResponse(responseCode = "400", description = "Campo inválido"),
+            @ApiResponse(responseCode = "409", description = "Telefone ou e-mail já em uso"),
             @ApiResponse(responseCode = "429", description = "Muitos cadastros com dados já em uso a partir do mesmo IP")
     })
     @PostMapping("/register")

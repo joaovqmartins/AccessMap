@@ -1,6 +1,10 @@
 package br.com.accessmap.backend.exception;
 
+import br.com.accessmap.backend.identity.service.UserService;
+import br.com.accessmap.backend.review.service.ReviewService;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import tools.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -15,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
@@ -89,6 +94,40 @@ public class ApiExceptionHandler {
                 "status", 403,
                 "mensagem", "Acesso negado"
         ));
+    }
+
+    /**
+     * Constraints de unicidade que o serviço já checa antes de salvar. Entre a checagem e o INSERT
+     * há uma janela: duas requisições simultâneas (toque duplo, reenvio do app) passam pela checagem
+     * e o banco barra a segunda. A resposta é a mesma da checagem do serviço.
+     */
+    private static final Map<String, String> CONFLITOS_DE_UNICIDADE = Map.of(
+            "uk_users_phone", UserService.TELEFONE_EM_USO,
+            "uk_users_email", UserService.EMAIL_EM_USO,
+            "uk_reviews_user_place_active", ReviewService.LOCAL_JA_AVALIADO
+    );
+
+    // Violação de constraint no banco: as de unicidade conhecidas são 409, o resto é erro interno
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String constraint = nomeDaConstraint(ex);
+        String mensagem = constraint == null ? null : CONFLITOS_DE_UNICIDADE.get(constraint);
+        if (mensagem == null) {
+            return handleGeneric(ex);
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "status", 409,
+                "mensagem", mensagem
+        ));
+    }
+
+    private static String nomeDaConstraint(Throwable ex) {
+        for (Throwable causa = ex; causa != null; causa = causa.getCause()) {
+            if (causa instanceof ConstraintViolationException violacao && violacao.getConstraintName() != null) {
+                return violacao.getConstraintName().toLowerCase(Locale.ROOT);
+            }
+        }
+        return null;
     }
 
     // Erros inesperados (segurança — não expõe detalhes internos)
