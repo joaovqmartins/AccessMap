@@ -15,4 +15,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
     @Modifying
     @Query("UPDATE RefreshToken r SET r.revokedAt = :now WHERE r.userId = :userId AND r.revokedAt IS NULL")
     int revokeAllActiveByUserId(String userId, LocalDateTime now);
+
+    /** Remove em lote, sem carregar entidades, os expirados e os revogados antes de {@code revokedBefore}. */
+    @Modifying
+    @Query("DELETE FROM RefreshToken r WHERE r.expiresAt < :now OR r.revokedAt < :revokedBefore")
+    int deleteExpiredOrRevokedBefore(LocalDateTime now, LocalDateTime revokedBefore);
 }
