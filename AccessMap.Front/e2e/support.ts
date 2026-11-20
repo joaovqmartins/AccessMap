@@ -86,6 +86,14 @@ export async function publish(author: Account, placeId: string, rating: number, 
   return { id: review.id, comment };
 }
 
+/** Três denúncias de contas antigas: a review fica OCULTA. */
+export async function hideByReports(reviewId: string) {
+  for (let i = 0; i < 3; i += 1) {
+    const reporter = await establishedAccount();
+    await post(`/api/reviews/${reviewId}/report`, { reason: 'SPAM' }, reporter.token);
+  }
+}
+
 export async function clearLeftovers() {
   await sql(`update reviews set suspicion_reason = null where comment like $1`, [`${COMMENT_PREFIX}%`]);
   await sql(`update reviews set status = 'REMOVIDA' where comment like $1 and status = 'OCULTA'`, [`${COMMENT_PREFIX}%`]);
