@@ -59,11 +59,11 @@ public class ReviewController {
 
         Page<Review> page;
         if (hasPlace && hasUser) {
-            page = reviewService.findByUserIdAndPlaceId(userId, placeId, pageable);
+            page = reviewService.findByUserIdAndPlaceId(userId, placeId, isViewer(jwt, userId), pageable);
         } else if (hasPlace) {
             page = reviewService.findByPlaceId(placeId, pageable);
         } else if (hasUser) {
-            page = reviewService.findByUserId(userId, pageable);
+            page = reviewService.findByUserId(userId, isViewer(jwt, userId), pageable);
         } else {
             page = reviewService.findAll(pageable);
         }
@@ -73,12 +73,12 @@ public class ReviewController {
     @Operation(summary = "Busca uma avaliação pelo ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Avaliação encontrada"),
-            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada")
+            @ApiResponse(responseCode = "404", description = "Avaliação não encontrada, ou oculta e de outra pessoa")
     })
     @GetMapping("/{id}")
     public ResponseEntity<ReviewResponseDto> getById(@AuthenticationPrincipal Jwt jwt,
                                                      @Parameter(description = "ID da avaliação") @PathVariable String id) {
-        return ResponseEntity.ok(ReviewResponseDto.from(reviewService.findById(id), viewerId(jwt)));
+        return ResponseEntity.ok(ReviewResponseDto.from(reviewService.findVisible(id, viewerId(jwt)), viewerId(jwt)));
     }
 
     @Operation(summary = "Cria uma avaliação de acessibilidade para um local",
@@ -152,6 +152,10 @@ public class ReviewController {
         if (!userId.equals(jwt.getSubject()) && !isAdmin(jwt)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode listar as suas próprias avaliações");
         }
+    }
+
+    private static boolean isViewer(Jwt jwt, String userId) {
+        return jwt != null && userId.equals(jwt.getSubject());
     }
 
     /** As rotas de leitura são públicas: sem token, não há quem esteja vendo. */

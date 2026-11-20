@@ -79,22 +79,22 @@ class ReviewControllerTest {
     @Test
     void soUserIdListaAsAvaliacoesDoUsuario() throws Exception {
         logadoComo("u1");
-        when(reviewService.findByUserId(eq("u1"), any(Pageable.class))).thenReturn(pagina);
+        when(reviewService.findByUserId(eq("u1"), eq(true), any(Pageable.class))).thenReturn(pagina);
 
         mockMvc.perform(get("/api/reviews?userId=u1")).andExpect(status().isOk());
 
-        verify(reviewService).findByUserId(eq("u1"), any(Pageable.class));
+        verify(reviewService).findByUserId(eq("u1"), eq(true), any(Pageable.class));
         verifyNoMoreInteractions(reviewService);
     }
 
     @Test
     void placeIdEUserIdJuntosFiltramPelosDois() throws Exception {
         logadoComo("u1");
-        when(reviewService.findByUserIdAndPlaceId(eq("u1"), eq("p1"), any(Pageable.class))).thenReturn(pagina);
+        when(reviewService.findByUserIdAndPlaceId(eq("u1"), eq("p1"), eq(true), any(Pageable.class))).thenReturn(pagina);
 
         mockMvc.perform(get("/api/reviews?placeId=p1&userId=u1")).andExpect(status().isOk());
 
-        verify(reviewService).findByUserIdAndPlaceId(eq("u1"), eq("p1"), any(Pageable.class));
+        verify(reviewService).findByUserIdAndPlaceId(eq("u1"), eq("p1"), eq(true), any(Pageable.class));
         verifyNoMoreInteractions(reviewService);
     }
 

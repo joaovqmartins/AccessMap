@@ -211,10 +211,10 @@ class ReviewServiceTest {
     void deveListarReviewsDoUsuario() {
         Review review = reviewPublicada();
         Pageable pageable = PageRequest.of(0, 20);
-        when(reviewRepository.findByUserIdAndStatus("user-1", ReviewStatus.PUBLICADA, pageable))
+        when(reviewRepository.findByUserIdAndStatusIn("user-1", List.of(ReviewStatus.PUBLICADA), pageable))
                 .thenReturn(new PageImpl<>(List.of(review)));
 
-        assertThat(reviewService.findByUserId("user-1", pageable).getContent()).containsExactly(review);
+        assertThat(reviewService.findByUserId("user-1", false, pageable).getContent()).containsExactly(review);
     }
 
     @Test
