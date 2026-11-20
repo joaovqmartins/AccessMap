@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -47,12 +48,26 @@ public class ReviewService {
         return reviewRepository.findByPlaceIdAndStatus(placeId, ReviewStatus.PUBLICADA, pageable);
     }
 
-    public Page<Review> findByUserId(String userId, Pageable pageable) {
-        return reviewRepository.findByUserIdAndStatus(userId, ReviewStatus.PUBLICADA, pageable);
+    /** @param own a própria pessoa pedindo: inclui as reviews dela em análise ({@code OCULTA}) */
+    public Page<Review> findByUserId(String userId, boolean own, Pageable pageable) {
+        return reviewRepository.findByUserIdAndStatusIn(userId, visibleStatuses(own), pageable);
     }
 
-    public Page<Review> findByUserIdAndPlaceId(String userId, String placeId, Pageable pageable) {
-        return reviewRepository.findByUserIdAndPlaceIdAndStatus(userId, placeId, ReviewStatus.PUBLICADA, pageable);
+    /** @param own a própria pessoa pedindo: inclui as reviews dela em análise ({@code OCULTA}) */
+    public Page<Review> findByUserIdAndPlaceId(String userId, String placeId, boolean own, Pageable pageable) {
+        return reviewRepository.findByUserIdAndPlaceIdAndStatusIn(userId, placeId, visibleStatuses(own), pageable);
+    }
+
+    /** Publicada para qualquer um; oculta só para o autor, que a vê como em análise (#33). */
+    public Review findVisible(String id, String viewerId) {
+        return reviewRepository.findByIdAndStatus(id, ReviewStatus.PUBLICADA)
+                .or(() -> reviewRepository.findByIdAndStatus(id, ReviewStatus.OCULTA)
+                        .filter(review -> review.getUserId().equals(viewerId)))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Avaliação não encontrada"));
+    }
+
+    private static List<ReviewStatus> visibleStatuses(boolean own) {
+        return own ? List.of(ReviewStatus.PUBLICADA, ReviewStatus.OCULTA) : List.of(ReviewStatus.PUBLICADA);
     }
 
     public Review findById(String id) {
@@ -113,8 +128,11 @@ public class ReviewService {
      */
     @Transactional
     public Review update(String id, String userId, boolean isAdmin, ReviewUpdateRequestDto request) {
-        Review existing = findById(id);
+        Review existing = findVisible(id, userId);
         assertOwnerOrAdmin(existing, userId, isAdmin);
+        if (existing.getStatus() == ReviewStatus.OCULTA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Sua avaliação está em análise e não pode ser editada.");
+        }
 
         if (request.getTags() != null && request.getTags().isEmpty()) {
             throw new ResponseStatusException(
@@ -138,11 +156,15 @@ public class ReviewService {
 
     @Transactional
     public void delete(String id, String userId, boolean isAdmin) {
-        Review existing = findById(id);
+        Review existing = findVisible(id, userId);
         assertOwnerOrAdmin(existing, userId, isAdmin);
 
+        // Excluir a própria review em análise conta como moderação (#33, opção B): senão bastaria
+        // excluir e avaliar de novo para zerar as denúncias sem passar pelo ADMIN
+        boolean underReview = existing.getStatus() == ReviewStatus.OCULTA;
         existing.setStatus(ReviewStatus.REMOVIDA);
-        if (!existing.getUserId().equals(userId)) {
+        existing.setSuspicionReason(null);
+        if (underReview || !existing.getUserId().equals(userId)) {
             existing.setModerationRemovedAt(LocalDateTime.now());
         }
         existing.setUpdatedAt(LocalDateTime.now());

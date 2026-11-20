@@ -21,9 +21,10 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
     Page<Review> findByPlaceIdAndStatus(String placeId, ReviewStatus status, Pageable pageable);
 
-    Page<Review> findByUserIdAndStatus(String userId, ReviewStatus status, Pageable pageable);
+    Page<Review> findByUserIdAndStatusIn(String userId, Collection<ReviewStatus> statuses, Pageable pageable);
 
-    Page<Review> findByUserIdAndPlaceIdAndStatus(String userId, String placeId, ReviewStatus status, Pageable pageable);
+    Page<Review> findByUserIdAndPlaceIdAndStatusIn(String userId, String placeId, Collection<ReviewStatus> statuses,
+                                                   Pageable pageable);
 
     boolean existsByUserIdAndPlaceIdAndStatus(String userId, String placeId, ReviewStatus status);
 

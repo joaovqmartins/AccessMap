@@ -49,6 +49,10 @@ export default function ReviewFormScreen(props: Props) {
           setFormError('Você só pode editar as suas próprias avaliações.');
           return;
         }
+        if (review.status === 'OCULTA') {
+          setFormError('Esta avaliação está em análise e não pode ser editada.');
+          return;
+        }
         setOriginal(review);
         setRating(review.rating);
         setComment(review.comment ?? '');

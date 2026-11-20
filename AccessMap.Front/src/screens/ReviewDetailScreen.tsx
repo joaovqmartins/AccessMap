@@ -43,9 +43,14 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
   );
 
   const isMine = !!review?.mine;
+  // Só o autor recebe a própria review oculta: para os outros, a API responde 404
+  const underReview = review?.status === 'OCULTA';
 
   async function confirmDelete() {
-    if (await confirm('Excluir avaliação', 'Tem certeza? Esta ação não pode ser desfeita.', 'Excluir')) {
+    const message = underReview
+      ? 'Tem certeza? Esta ação não pode ser desfeita, e excluir uma avaliação em análise conta como remoção pela moderação.'
+      : 'Tem certeza? Esta ação não pode ser desfeita.';
+    if (await confirm('Excluir avaliação', message, 'Excluir')) {
       handleDelete();
     }
   }
@@ -77,12 +82,19 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <ErrorMessage message={error} />
       {review && <ReviewCard review={review} isMine={isMine} />}
+      {underReview && (
+        <Text style={styles.notice} accessibilityLiveRegion="polite">
+          Esta avaliação está em análise e não aparece para outras pessoas.
+        </Text>
+      )}
       {isMine && (
         <View style={styles.actions}>
+          {!underReview && (
           <Button
             title="Editar avaliação"
             onPress={() => router.push({ pathname: '/avaliacoes/[id]/editar', params: { id: reviewId } })}
           />
+          )}
           <Button title="Excluir avaliação" variant="danger" onPress={confirmDelete} loading={deleting} />
         </View>
       )}
