@@ -22,5 +22,9 @@ USER accessmap
 
 COPY --from=build /app/app.jar app.jar
 
+# A imagem e a de producao: perfil prod (application-prod.yaml), que exige as variaveis do banco
+ENV SPRING_PROFILES_ACTIVE=prod
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Heap proporcional a memoria do container, para nao ser encerrado por falta de memoria em planos pequenos
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
