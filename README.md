@@ -108,6 +108,19 @@ npm run e2e
 - Cobrem a versão web. O `Alert` e o layout do celular se conferem no Expo Go.
 - Ainda não rodam no CI, porque precisam do backend e do app no ar (ver #103).
 
+### Deploy
+
+A API vai para o Railway a partir do `AccessMap.Back/Dockerfile`, que sobe com o perfil `prod` (`application-prod.yaml`). O passo a passo, as variáveis de produção e os erros comuns estão em [`docs/deploy.md`](docs/deploy.md).
+
+Para testar a imagem de produção na sua máquina, contra o Postgres local:
+
+```bash
+docker build -t accessmap-api AccessMap.Back
+docker run --rm -p 8080:8080 -e JWT_SECRET=<32+ caracteres> \
+  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/accessmap \
+  -e DB_USERNAME=postgres -e DB_PASSWORD=accessmap123 accessmap-api
+```
+
 ## 🔑 Chave da Google Maps Platform
 
 A busca de locais usa a **Places API (New)**. Cada integrante gera a própria chave, sem custo dentro da cota gratuita:
