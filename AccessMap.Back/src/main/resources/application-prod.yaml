@@ -1,0 +1,19 @@
+# Perfil de producao (SPRING_PROFILES_ACTIVE=prod, padrao da imagem Docker). Guia: docs/deploy.md.
+# Banco sem valor padrao de proposito: faltando a variavel, a API nao sobe, em vez de subir apontando
+# para o banco local de desenvolvimento.
+spring:
+  docker:
+    compose:
+      # Nao existe Docker dentro do container de producao
+      enabled: false
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false
+
+server:
+  port: ${PORT:8080}
+  # Atras do proxy do Railway: sem isso, o limite de login por IP veria todo mundo como um IP so (#107)
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}

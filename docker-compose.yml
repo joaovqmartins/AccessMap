@@ -5,15 +5,16 @@ services:
     image: postgres:16
     container_name: accessmap-db
     environment:
+      # Mesmas variaveis da API (.env da raiz); sem elas, os valores do banco local de desenvolvimento
       POSTGRES_DB: accessmap
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: accessmap123
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-accessmap123}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d accessmap"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d accessmap"]
       interval: 5s
       timeout: 3s
       retries: 10
