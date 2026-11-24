@@ -94,6 +94,11 @@ export async function hideByReports(reviewId: string) {
   }
 }
 
+/** Muda a data de criação gravada, que fica em UTC (#115). */
+export async function setCreatedAt(reviewId: string, utc: string) {
+  await sql(`update reviews set created_at = $1 where id = $2`, [utc, reviewId]);
+}
+
 export async function clearLeftovers() {
   await sql(`update reviews set suspicion_reason = null where comment like $1`, [`${COMMENT_PREFIX}%`]);
   await sql(`update reviews set status = 'REMOVIDA' where comment like $1 and status = 'OCULTA'`, [`${COMMENT_PREFIX}%`]);
