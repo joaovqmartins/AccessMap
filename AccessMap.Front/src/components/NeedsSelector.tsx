@@ -28,6 +28,7 @@ export default function NeedsSelector({ value, onChange, error }: Props) {
               onPress={() => toggle(need)}
               accessibilityRole="checkbox"
               accessibilityLabel={NEED_LABELS[need]}
+              aria-checked={selected}
               accessibilityState={{ checked: selected }}
               style={[styles.chip, selected && styles.chipSelected]}
             >

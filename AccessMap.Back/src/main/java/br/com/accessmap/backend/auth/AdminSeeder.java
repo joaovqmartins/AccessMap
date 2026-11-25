@@ -41,7 +41,7 @@ public class AdminSeeder implements ApplicationRunner {
             return;
         }
         if (userRepository.existsByPhone(adminPhone)) {
-            log.warn("ADMIN_PHONE {} já está cadastrado como usuário comum; nenhum ADMIN foi criado", adminPhone);
+            log.warn("ADMIN_PHONE {} já está cadastrado como usuário comum; nenhum ADMIN foi criado", mascarar(adminPhone));
             return;
         }
 
@@ -55,6 +55,11 @@ public class AdminSeeder implements ApplicationRunner {
                 .updatedAt(LocalDateTime.now())
                 .build());
 
-        log.info("Usuário ADMIN inicial criado: {}", adminPhone);
+        log.info("Usuário ADMIN inicial criado: {}", mascarar(adminPhone));
+    }
+
+    /** Telefone é dado pessoal: no log, só os 4 últimos dígitos. */
+    static String mascarar(String telefone) {
+        return telefone.length() <= 4 ? "****" : "***" + telefone.substring(telefone.length() - 4);
     }
 }

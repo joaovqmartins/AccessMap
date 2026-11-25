@@ -40,6 +40,8 @@ public class SecurityConfig {
                         // consulta em lote: é leitura, só usa POST porque a lista de IDs não cabe na URL
                         .requestMatchers(HttpMethod.POST, "/api/places/batch").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // health check da plataforma de deploy; os detalhes só aparecem para o ADMIN
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

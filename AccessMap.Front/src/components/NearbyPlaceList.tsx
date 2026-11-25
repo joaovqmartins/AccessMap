@@ -1,7 +1,7 @@
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { NEARBY_RADIUS_M } from '../api/googlePlaces';
-import { colors, spacing } from '../constants/theme';
+import { colors, spacing, MIN_FONT_SIZE } from '../constants/theme';
 import type { NearbyResult } from '../hooks/useNearbyPlaces';
 import { formatDistance } from '../utils/distance';
 import Button from './Button';
@@ -117,5 +117,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   hint: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
   notice: { fontSize: 15, color: colors.textMuted, textAlign: 'center', marginVertical: spacing.md },
-  attribution: { fontSize: 12, color: colors.textMuted, textAlign: 'right' },
+  attribution: { fontSize: MIN_FONT_SIZE, color: colors.textMuted, textAlign: 'right' },
 });

@@ -42,6 +42,9 @@ export default function MainMenu({ onClose }: Props) {
       <View style={styles.overlay}>
         <View
           style={[styles.panel, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: spacing.md + insets.left }]}
+          // Caixa de diálogo modal com nome: sem o papel, o aria-modal da web fica inválido (axe)
+          role="dialog"
+          aria-label="Menu"
           accessibilityViewIsModal
         >
           <View style={styles.header}>
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
   },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+  backdrop: { flex: 1, backgroundColor: colors.overlay },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

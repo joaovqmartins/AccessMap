@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
-import { colors, spacing } from '../constants/theme';
+import { colors, spacing, MIN_FONT_SIZE } from '../constants/theme';
 import type { NearbyResult } from '../hooks/useNearbyPlaces';
 import type { Coords } from '../hooks/useUserLocation';
 import { formatDistance } from '../utils/distance';
@@ -102,5 +102,5 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 12, height: 12, borderRadius: 6, marginRight: spacing.xs },
   legendText: { fontSize: 13, color: colors.text },
-  attribution: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  attribution: { fontSize: MIN_FONT_SIZE, color: colors.textMuted, marginTop: 2 },
 });

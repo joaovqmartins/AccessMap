@@ -34,7 +34,8 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    // Borda do campo pede 3:1 com o fundo (WCAG 1.4.11): o border decorativo dava 1,3:1
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     fontSize: 16,

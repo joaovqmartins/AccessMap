@@ -89,6 +89,7 @@ function CheckRow({ label, detail, checked, onPress }: {
     <Pressable
       onPress={onPress}
       accessibilityRole="checkbox"
+      aria-checked={checked}
       accessibilityState={{ checked }}
       accessibilityLabel={detail ? `${label}: ${detail}` : label}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}

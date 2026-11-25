@@ -14,7 +14,7 @@ export default function ErrorMessage({ message }: { message?: string | null }) {
 const styles = StyleSheet.create({
   text: {
     color: colors.danger,
-    backgroundColor: '#FDECEA',
+    backgroundColor: colors.dangerBackground,
     borderRadius: 8,
     padding: spacing.sm + 4,
     marginBottom: spacing.md,

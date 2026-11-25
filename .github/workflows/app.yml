@@ -1,0 +1,50 @@
+name: App
+
+# Checagens do app (Expo) em todo PR e push na main: tipos, lint e testes unitários.
+# Só roda quando algo do app (ou este arquivo) muda.
+on:
+  pull_request:
+    paths:
+      - 'AccessMap.Front/**'
+      - '.github/workflows/app.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AccessMap.Front/**'
+      - '.github/workflows/app.yml'
+
+# Um push novo no mesmo PR cancela a execução anterior
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: typecheck, lint e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: AccessMap.Front
+    steps:
+      - uses: actions/checkout@v4
+
+      # O Expo SDK 58 pede Node ^22.13 ou ^24.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: AccessMap.Front/package-lock.json
+
+      - name: Dependências
+        run: npm ci
+
+      # Não precisa gerar os tipos das rotas (.expo/types): com o expo-router 58 o tsc passa sem eles
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes unitários
+        run: npm test -- --ci

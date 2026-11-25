@@ -15,6 +15,26 @@ spring:
 
 server:
   port: 8080
+
+# Health check para a plataforma de deploy (#132). So o health fica exposto: env, metrics, beans etc.
+# revelariam configuracao interna. Liveness diz se o processo esta vivo (sem olhar o banco, para uma queda
+# do banco nao reiniciar o container a toa); readiness diz se pode receber trafego (inclui o banco).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+      # Quem nao e ADMIN ve so o status; os detalhes (banco, disco) ficam para o ADMIN
+      show-details: when-authorized
+      show-components: when-authorized
+      roles: ADMIN
   # "native" so atras de um proxy confiavel (deploy): sem proxy, o cliente falsificaria o IP pelo X-Forwarded-For.
   forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
 

@@ -22,6 +22,7 @@ export default function StarRatingInput({ value, onChange, error }: Props) {
             onPress={() => onChange(n)}
             accessibilityRole="radio"
             accessibilityLabel={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`}
+            aria-checked={value === n}
             accessibilityState={{ checked: value === n }}
             hitSlop={4}
             style={styles.target}

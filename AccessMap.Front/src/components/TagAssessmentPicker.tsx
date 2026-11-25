@@ -37,6 +37,7 @@ export default function TagAssessmentPicker({ value, onChange, error }: Props) {
                   onPress={() => toggle(tag, assessment)}
                   accessibilityRole="radio"
                   accessibilityLabel={`${TAG_LABELS[tag]}: ${ASSESSMENT_LABELS[assessment]}`}
+                  aria-checked={selected}
                   accessibilityState={{ checked: selected }}
                   style={[styles.option, { borderColor: color }, selected && { backgroundColor: color }]}
                 >

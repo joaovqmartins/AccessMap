@@ -31,13 +31,27 @@ Os limites de avaliação (`REVIEW_LIMIT_*`) e de login (`AUTH_LIMIT_*`) são op
 
 ## 3. Depois da primeira subida
 
-1. Abra `https://<domínio>/swagger-ui.html` e confira se a página carrega.
+1. Abra `https://<domínio>/actuator/health/readiness` e confira se responde `{"status":"UP"}`. Depois abra `https://<domínio>/swagger-ui.html`.
 2. Entre com o ADMIN pelo app ou pelo Swagger (`/api/auth/login`).
 3. Remova `ADMIN_PHONE` e `ADMIN_PASSWORD` das variáveis: o ADMIN já existe, e a senha não precisa ficar guardada lá.
 4. Se o banco já tinha avaliações de antes da nota ponderada (#108), chame `POST /api/admin/places/recalculate` uma vez, como ADMIN.
 5. Confira o limite de login por IP (#107): duas pessoas em redes diferentes, errando a senha, precisam contar separadas.
 
-## 4. Apontar o app para a API
+## 4. Health check
+
+Em **Settings → Deploy → Healthcheck Path**, coloque `/actuator/health/readiness`. Assim o Railway só manda tráfego para a versão nova depois que ela conectou no banco e o Flyway terminou, e mantém a anterior no ar se a nova não subir.
+
+| Caminho | Responde `UP` quando | Uso |
+|---|---|---|
+| `/actuator/health/readiness` | A API subiu **e** o banco responde | Healthcheck do Railway |
+| `/actuator/health/liveness` | O processo está vivo (não olha o banco) | `HEALTHCHECK` do `Dockerfile` |
+| `/actuator/health` | Os dois acima | Conferir na mão |
+
+Sem login, a resposta é só `{"status":"UP"}` (ou `DOWN`, com 503). Com o token de ADMIN aparecem os detalhes, como o estado do banco. Os outros endpoints do Actuator (`env`, `metrics`, `beans`…) não ficam expostos, nem para o ADMIN.
+
+Os logs ficam em `INFO`, sem SQL. Para investigar algo, defina `LOG_LEVEL_APP=DEBUG` nas variáveis e volte para `INFO` depois.
+
+## 5. Apontar o app para a API
 
 No `AccessMap.Front/.env.local`, troque `EXPO_PUBLIC_API_URL` pelo domínio do Railway, com `https://`, e reinicie o `npm start`.
 
@@ -49,3 +63,4 @@ No `AccessMap.Front/.env.local`, troque `EXPO_PUBLIC_API_URL` pelo domínio do R
 | `password authentication failed` | `DB_USERNAME` ou `DB_PASSWORD` errados ou ausentes |
 | `Defina a variavel de ambiente JWT_SECRET` | Falta `JWT_SECRET`, ou ela tem menos de 32 caracteres |
 | A API sobe, mas o domínio dá erro 502 | O domínio aponta para outra porta: confira `PORT` e a porta do domínio |
+| Deploy fica em "Healthcheck failed" | A API não conectou no banco a tempo, ou o caminho está errado: confira o log e o `Healthcheck Path` |

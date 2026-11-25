@@ -13,6 +13,15 @@ spring:
   jpa:
     show-sql: false
 
+# Logs de producao (#132): INFO para a API, e o Hibernate so em WARN para nao registrar SQL nem
+# os valores dos parametros (telefone, hash de senha). Trocar por variavel sem novo deploy da imagem.
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    br.com.accessmap: ${LOG_LEVEL_APP:INFO}
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+
 server:
   port: ${PORT:8080}
   # Atras do proxy do Railway: sem isso, o limite de login por IP veria todo mundo como um IP so (#107)

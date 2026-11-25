@@ -1,5 +1,9 @@
 # ♿ AccessMap
 
+[![Backend](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml)
+[![App](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml)
+[![E2E](https://github.com/joaovqmartins/AccessMap/actions/workflows/e2e.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/e2e.yml)
+
 O AccessMap é um aplicativo mobile que permite à comunidade mapear colaborativamente pontos de acessibilidade e barreiras urbanas. 
 
 O objetivo é fornecer informações reais e atualizadas sobre a acessibilidade dos espaços urbanos, garantindo maior autonomia para pessoas com deficiência ou mobilidade reduzida, além de gerar dados abertos para o embasamento de políticas públicas de inclusão.
@@ -90,7 +94,17 @@ npm run lint        # ESLint (eslint-config-expo)
 npx expo-doctor     # versões compatíveis com o SDK
 ```
 
-As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
+As rotas são tipadas (`typedRoutes` no `app.json`). O `npx expo start` gera os tipos em `.expo/types/`, que não vai para o git. Com o expo-router 58 o `typecheck` passa sem eles, então um clone novo não precisa rodar o `expo start` antes. Mesmo assim, os tipos gerados deixam o editor completar os caminhos de `Link` e `router.push`.
+
+### CI (GitHub Actions)
+
+Todo PR e todo push na `main` rodam três workflows, cada um só quando as pastas dele mudam:
+
+- **Backend** (`.github/workflows/backend.yml`): `./mvnw test` com Java 17. Os testes de integração usam o Docker do runner, pelo Testcontainers. Quando um teste falha, os relatórios ficam como artefato da execução.
+- **App** (`.github/workflows/app.yml`): `npm ci`, `typecheck`, `lint` e `npm test` com Node 24.
+- **E2E** (`.github/workflows/e2e.yml`): a suíte do Playwright contra um banco só dela (ver "Testes e2e"), quando o app ou a API mudam.
+
+Antes de abrir um PR, rode os mesmos comandos na sua máquina para não descobrir o erro só no CI.
 
 ### Testes unitários do app
 
