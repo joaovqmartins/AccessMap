@@ -9,6 +9,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import FiltersModal from '../components/FiltersModal';
+import MainMenu from '../components/MainMenu';
 import NearbyPlaceList from '../components/NearbyPlaceList';
 import PlaceSearch from '../components/PlaceSearch';
 import PlacesMap from '../components/PlacesMap';
@@ -26,6 +27,30 @@ function initials(name: string | undefined) {
 
 // O react-native-maps não roda no navegador: lá a Home mostra só a lista
 const MAP_AVAILABLE = Platform.OS !== 'web';
+
+// Atalho da barra inferior para a categoria mais procurada
+const RESTAURANTS = PLACE_CATEGORIES.find((c) => c.key === 'restaurantes') ?? ALL_NEARBY;
+
+function BottomTab({ label, selected, onPress, accessibilityLabel }: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.navButton}
+      onPress={onPress}
+      accessibilityRole="tab"
+      // aria-selected além do accessibilityState: o react-native-web não repassa o `selected` para o DOM
+      aria-selected={selected}
+      accessibilityState={{ selected }}
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      <Text style={[styles.navText, selected && styles.navTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
 
 function openPlace(placeId: string, name: string) {
   router.push({ pathname: '/locais/[placeId]', params: { placeId, name } });
@@ -46,6 +71,7 @@ export default function HomeScreen() {
   // "Minhas necessidades" começa desligado: com poucas avaliações, a lista viria quase vazia sem o usuário entender
   const [filters, setFilters] = useState<AccessibilityFilters>(NO_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const nearby = useNearbyPlaces(location.status === 'ready' ? location.coords : null, category, filters);
   const activeFilters = filters.tags.length + (filters.useMyNeeds ? 1 : 0);
   const filtersDescription = describeFilters(filters);
@@ -69,7 +95,12 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.topRow}>
           {/* Menu Hamburger */}
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setMenuOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir menu"
+          >
             <Text style={styles.iconText}>☰</Text>
           </TouchableOpacity>
           
@@ -99,6 +130,7 @@ export default function HomeScreen() {
                 style={[styles.optionPill, selected && styles.optionPillSelected]}
                 onPress={() => setCategory(c)}
                 accessibilityRole="button"
+                aria-pressed={selected}
                 accessibilityState={{ selected }}
                 accessibilityLabel={`Categoria ${c.label}`}
               >
@@ -190,19 +222,29 @@ export default function HomeScreen() {
         />
       )}
 
+      {menuOpen && <MainMenu onClose={() => setMenuOpen(false)} />}
+
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
-      <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={[styles.navText, styles.navTextActive]}>Home</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Restaurantes</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Review</Text>
-        </TouchableOpacity>
+      <View style={styles.bottomNavigation} accessibilityRole="tablist">
+        <BottomTab
+          label="Home"
+          selected={category.key === ALL_NEARBY.key}
+          onPress={() => {
+            setCategory(ALL_NEARBY);
+            setFilters(NO_FILTERS);
+          }}
+        />
+        <BottomTab
+          label="Restaurantes"
+          selected={category.key === RESTAURANTS.key}
+          onPress={() => setCategory(RESTAURANTS)}
+        />
+        <BottomTab
+          label="Review"
+          accessibilityLabel="Minhas avaliações"
+          selected={false}
+          onPress={() => router.push('/minhas-avaliacoes')}
+        />
       </View>
 
     </SafeAreaView>
@@ -280,7 +322,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   iconButton: {
-    padding: 8,
+    minWidth: MIN_TOUCH,
+    minHeight: MIN_TOUCH,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconText: {
     fontSize: 24,
@@ -390,15 +435,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
   navButton: {
+    flex: 1,
+    minHeight: MIN_TOUCH + spacing.sm,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   navText: {
-    color: '#888',
+    // #888 tinha contraste 3,5:1 com o branco; o textMuted passa dos 4,5:1 do WCAG AA
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: '600',
   },

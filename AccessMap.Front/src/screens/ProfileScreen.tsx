@@ -191,6 +191,11 @@ export default function ProfileScreen() {
             <View style={styles.actions}>
               <Button title="Editar perfil" onPress={startEditing} />
               <Button title="Alterar senha" variant="secondary" onPress={startChangingPassword} />
+              <Button
+                title="Minhas avaliações"
+                variant="secondary"
+                onPress={() => router.push('/minhas-avaliacoes')}
+              />
               {user.role === 'ADMIN' && (
                 <Button title="Moderação" variant="secondary" onPress={() => router.push('/moderacao')} />
               )}
