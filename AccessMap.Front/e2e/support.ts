@@ -77,13 +77,26 @@ export async function adminAccount() {
   return account;
 }
 
-export async function publish(author: Account, placeId: string, rating: number, comment = unique(COMMENT_PREFIX)) {
+export async function publish(
+  author: Account,
+  placeId: string,
+  rating: number,
+  comment = unique(COMMENT_PREFIX),
+  placeName?: string,
+) {
   const review = await post<{ id: string }>(
     '/api/reviews',
-    { placeId, rating, comment, tags: { RAMPAS_E_ENTRADAS: 'ADEQUADO' } },
+    { placeId, placeName, rating, comment, tags: { RAMPAS_E_ENTRADAS: 'ADEQUADO' } },
     author.token,
   );
   return { id: review.id, comment };
+}
+
+/** Preenche o login da tela; diferente do `signIn`, não confere para onde o app foi depois. */
+export async function fillLogin(page: Page, phone: string, password = PASSWORD) {
+  await page.getByLabel('Telefone').fill(phone);
+  await page.getByLabel('Senha').fill(password);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 }
 
 /** Três denúncias de contas antigas: a review fica OCULTA. */

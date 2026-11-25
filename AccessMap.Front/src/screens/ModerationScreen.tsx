@@ -114,10 +114,10 @@ export default function ModerationScreen() {
               />
             )}
           </View>
-        ) : null
+        ) : undefined
       }
-      ListEmptyComponent={!error ? <Text style={styles.empty}>Nenhuma avaliação aguardando moderação</Text> : null}
-      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null}
+      ListEmptyComponent={!error ? <Text style={styles.empty}>Nenhuma avaliação aguardando moderação</Text> : undefined}
+      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : undefined}
     />
   );
 }

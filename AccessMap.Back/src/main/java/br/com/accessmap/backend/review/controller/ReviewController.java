@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.review.controller;
 
+import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.dto.ReviewReportRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewRequestDto;
 import br.com.accessmap.backend.review.dto.ReviewResponseDto;
@@ -27,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Tag(name = "Avaliações", description = "Criação e consulta de avaliações de acessibilidade")
 @RestController
@@ -36,6 +38,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReviewReportService reviewReportService;
+    private final PlaceService placeService;
 
     @Operation(summary = "Lista as avaliações de um local",
             description = "Paginado; por padrão ordenado das mais recentes para as mais antigas. "
@@ -67,7 +70,11 @@ public class ReviewController {
         } else {
             page = reviewService.findAll(pageable);
         }
-        return ResponseEntity.ok(page.map(review -> ReviewResponseDto.from(review, viewerId(jwt))));
+        // Nomes de todos os locais da página numa consulta só
+        Map<String, String> names = placeService.namesByPlaceId(
+                page.getContent().stream().map(Review::getPlaceId).collect(Collectors.toSet()));
+        return ResponseEntity.ok(page.map(review ->
+                ReviewResponseDto.from(review, viewerId(jwt), names.get(review.getPlaceId()))));
     }
 
     @Operation(summary = "Busca uma avaliação pelo ID")
@@ -78,7 +85,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     public ResponseEntity<ReviewResponseDto> getById(@AuthenticationPrincipal Jwt jwt,
                                                      @Parameter(description = "ID da avaliação") @PathVariable String id) {
-        return ResponseEntity.ok(ReviewResponseDto.from(reviewService.findVisible(id, viewerId(jwt)), viewerId(jwt)));
+        return ResponseEntity.ok(toDto(reviewService.findVisible(id, viewerId(jwt)), viewerId(jwt)));
     }
 
     @Operation(summary = "Cria uma avaliação de acessibilidade para um local",
@@ -94,7 +101,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponseDto> create(@AuthenticationPrincipal Jwt jwt,
                                                     @Valid @RequestBody ReviewRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ReviewResponseDto.from(reviewService.create(jwt.getSubject(), request), jwt.getSubject()));
+                .body(toDto(reviewService.create(jwt.getSubject(), request), jwt.getSubject()));
     }
 
     @Operation(summary = "Atualiza parcialmente uma avaliação",
@@ -109,7 +116,7 @@ public class ReviewController {
                                                     @PathVariable String id,
                                                     @Valid @RequestBody ReviewUpdateRequestDto request) {
         Review updated = reviewService.update(id, jwt.getSubject(), isAdmin(jwt), request);
-        return ResponseEntity.ok(ReviewResponseDto.from(updated, jwt.getSubject()));
+        return ResponseEntity.ok(toDto(updated, jwt.getSubject()));
     }
 
     @Operation(summary = "Remove uma avaliação",
@@ -166,5 +173,10 @@ public class ReviewController {
     private boolean isAdmin(Jwt jwt) {
         List<String> roles = jwt.getClaimAsStringList("roles");
         return roles != null && roles.contains("ADMIN");
+    }
+
+    private ReviewResponseDto toDto(Review review, String viewerId) {
+        String placeName = placeService.namesByPlaceId(List.of(review.getPlaceId())).get(review.getPlaceId());
+        return ReviewResponseDto.from(review, viewerId, placeName);
     }
 }

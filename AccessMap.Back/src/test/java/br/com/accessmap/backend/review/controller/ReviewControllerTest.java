@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.review.controller;
 
+import br.com.accessmap.backend.place.service.PlaceService;
 import br.com.accessmap.backend.review.model.Review;
 import br.com.accessmap.backend.review.service.ReviewService;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +41,9 @@ class ReviewControllerTest {
 
     @Mock
     private ReviewService reviewService;
+
+    @Mock
+    private PlaceService placeService;
 
     @InjectMocks
     private ReviewController controller;

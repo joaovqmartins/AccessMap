@@ -18,16 +18,19 @@ import java.util.Set;
  * {@code reviewerNeeds} só aparece para o próprio autor. {@code trustBadge} só vem para Nova e Confiável:
  * Regular não tem selo, e Restrita não sai da API para não expor uma punição.
  */
-public record ReviewResponseDto(String id, String placeId, Integer rating, String comment,
+public record ReviewResponseDto(String id, String placeId, String placeName, Integer rating, String comment,
                                 Map<AccessibilityTag, TagAssessment> tags,
                                 @JsonInclude(JsonInclude.Include.NON_NULL) Set<AccessibilityNeed> reviewerNeeds,
                                 ReviewStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, boolean mine,
                                 @JsonInclude(JsonInclude.Include.NON_NULL) TrustLevel trustBadge) {
 
-    /** @param viewerId quem está vendo, extraído do token; {@code null} sem login */
-    public static ReviewResponseDto from(Review review, String viewerId) {
+    /**
+     * @param viewerId  quem está vendo, extraído do token; {@code null} sem login
+     * @param placeName nome salvo do local; {@code null} se ninguém informou ainda
+     */
+    public static ReviewResponseDto from(Review review, String viewerId, String placeName) {
         boolean mine = review.getUserId().equals(viewerId);
-        return new ReviewResponseDto(review.getId(), review.getPlaceId(), review.getRating(), review.getComment(),
+        return new ReviewResponseDto(review.getId(), review.getPlaceId(), placeName, review.getRating(), review.getComment(),
                 review.getTags(), mine ? review.getReviewerNeeds() : null, review.getStatus(),
                 review.getCreatedAt(), review.getUpdatedAt(), mine, badgeOf(review.getAuthorTrustLevel()));
     }

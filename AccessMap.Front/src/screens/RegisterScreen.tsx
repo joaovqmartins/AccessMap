@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
 import { PASSWORD_MAX_BYTES, PASSWORD_TOO_LONG, TEXT_MAX, utf8Length } from '../constants/limits';
+import { safeRedirect, setPendingRedirect } from '../utils/navigation';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
 import { authStyles as styles } from './LoginScreen';
 
@@ -16,6 +17,8 @@ type Field = 'name' | 'phone' | 'password';
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
+  // Para onde voltar depois do cadastro, quando veio de "Entrar para avaliar" (#102)
+  const redirect = safeRedirect(useLocalSearchParams<{ redirect?: string }>().redirect);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -41,8 +44,10 @@ export default function RegisterScreen() {
 
     setSubmitting(true);
     try {
+      setPendingRedirect(redirect);
       await signUp({ name: name.trim(), phone, password });
     } catch (e) {
+      setPendingRedirect(null);
       if (e instanceof ApiError) {
         setErrors(e.fields as Partial<Record<Field, string>>);
         setFormError(e.message);
@@ -99,7 +104,11 @@ export default function RegisterScreen() {
 
           <Button title="Cadastrar" onPress={handleSubmit} loading={submitting} />
 
-          <Link href="/login" style={styles.link} accessibilityRole="link">
+          <Link
+            href={redirect ? { pathname: '/login', params: { redirect } } : '/login'}
+            style={styles.link}
+            accessibilityRole="link"
+          >
             Já tem conta? Entrar
           </Link>
         </ScrollView>

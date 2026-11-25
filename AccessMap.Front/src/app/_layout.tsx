@@ -1,8 +1,14 @@
-import { Stack } from 'expo-router';
+import { Stack, router, type Href } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '../auth/AuthContext';
+import ErrorScreen from '../components/ErrorScreen';
 import { colors } from '../constants/theme';
+import { takePendingRedirect } from '../utils/navigation';
+
+// Qualquer tela que quebre ao renderizar cai aqui, em vez de tela branca (#133)
+export { ErrorScreen as ErrorBoundary };
 
 export default function RootLayout() {
   return (
@@ -14,6 +20,17 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status, user } = useAuth();
+
+  // Quem entrou por "Entrar para avaliar" volta para onde estava (#102). Sem destino guardado, o
+  // Stack.Protected leva para a Home sozinho. O replace espera o Stack já com as telas de quem está logado.
+  useEffect(() => {
+    if (status !== 'signedIn') return;
+    const redirect = takePendingRedirect();
+    if (redirect) {
+      const timer = setTimeout(() => router.replace(redirect as Href), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   if (status === 'loading') {
     return (
@@ -27,8 +44,10 @@ function RootNavigator() {
   return (
     <Stack>
       <Stack.Protected guard={signedIn}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        {/* O título não aparece (sem cabeçalho), mas é o que o "voltar" das outras telas anuncia */}
+        <Stack.Screen name="index" options={{ headerShown: false, title: 'Início' }} />
         <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
+        <Stack.Screen name="minhas-avaliacoes" options={{ title: 'Minhas avaliações' }} />
         <Stack.Screen name="locais/[placeId]/avaliar" options={{ title: 'Avaliar local' }} />
         <Stack.Screen name="avaliacoes/[id]/editar" options={{ title: 'Editar avaliação' }} />
       </Stack.Protected>
@@ -37,13 +56,15 @@ function RootNavigator() {
         <Stack.Screen name="moderacao" options={{ title: 'Moderação' }} />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
-        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false, title: 'Entrar' }} />
         <Stack.Screen name="(auth)/cadastro" options={{ title: 'Cadastro' }} />
       </Stack.Protected>
       {/* Leitura pública, como no backend */}
       <Stack.Screen name="locais/[placeId]/index" options={{ title: 'Local' }} />
       <Stack.Screen name="locais/[placeId]/avaliacoes" options={{ title: 'Avaliações' }} />
       <Stack.Screen name="avaliacoes/[id]/index" options={{ title: 'Avaliação' }} />
+      {/* Só em desenvolvimento: força um erro para o e2e conferir a tela de erro */}
+      <Stack.Screen name="dev/erro" options={{ title: 'Teste de erro' }} />
     </Stack>
   );
 }

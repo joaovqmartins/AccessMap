@@ -8,10 +8,12 @@ import StarRating from './StarRating';
 type Props = {
   review: Review;
   isMine?: boolean;
+  /** Mostra o nome do local no topo: em listas que juntam vários locais, como "Minhas avaliações". */
+  showPlace?: boolean;
   onPress?: () => void;
 };
 
-export default function ReviewCard({ review, isMine, onPress }: Props) {
+export default function ReviewCard({ review, isMine, showPlace, onPress }: Props) {
   const tags = Object.entries(review.tags ?? {}) as [AccessibilityTag, keyof typeof ASSESSMENT_LABELS][];
   const date = new Date(review.createdAt).toLocaleDateString('pt-BR');
 
@@ -23,6 +25,11 @@ export default function ReviewCard({ review, isMine, onPress }: Props) {
       accessibilityHint={onPress ? 'Abre os detalhes da avaliação' : undefined}
       style={({ pressed }) => [styles.card, isMine && styles.mine, pressed && styles.pressed]}
     >
+      {showPlace && (
+        <Text style={styles.place} accessibilityRole="header" numberOfLines={2}>
+          {review.placeName || 'Local sem nome salvo'}
+        </Text>
+      )}
       <View style={styles.header}>
         <StarRating value={review.rating} size={16} />
         <Text style={styles.author}>{isMine ? 'Sua avaliação' : 'Usuário'} · {date}</Text>
@@ -66,6 +73,7 @@ const styles = StyleSheet.create({
   },
   mine: { borderColor: colors.primary, borderWidth: 2 },
   pressed: { opacity: 0.7 },
+  place: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   author: { fontSize: 13, color: colors.textMuted },
   badge: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: spacing.xs },

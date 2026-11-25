@@ -19,6 +19,10 @@ public class ReviewRequestDto {
     @NotBlank(message = "placeId é obrigatório")
     private String placeId;
 
+    /** Nome do local no Google, opcional: só serve para exibir em listas como "Minhas avaliações". */
+    @Size(max = FieldLimits.TEXT_MAX, message = "Nome do local deve ter no máximo 255 caracteres")
+    private String placeName;
+
     @NotNull(message = "rating é obrigatório")
     @Min(value = 1, message = "rating deve ser entre 1 e 5")
     @Max(value = 5, message = "rating deve ser entre 1 e 5")

@@ -12,8 +12,15 @@ import ReportReviewForm from '../components/ReportReviewForm';
 import ReviewCard from '../components/ReviewCard';
 import { colors, spacing } from '../constants/theme';
 import { confirm } from '../utils/dialog';
+import { goBackOr } from '../utils/navigation';
 
-export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
+type Props = {
+  reviewId: string;
+  /** Chegou aqui porque tentou avaliar de novo um local que já tinha avaliado. */
+  alreadyReviewed?: boolean;
+};
+
+export default function ReviewDetailScreen({ reviewId, alreadyReviewed }: Props) {
   const { user } = useAuth();
   const [review, setReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +66,12 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
     setDeleting(true);
     try {
       await reviewsApi.remove(reviewId);
-      router.back();
+      // Sem histórico (link direto ou chegada pelo aviso de "já avaliou"), vai para o local avaliado
+      goBackOr(
+        review
+          ? { pathname: '/locais/[placeId]', params: { placeId: review.placeId, name: review.placeName ?? undefined } }
+          : '/',
+      );
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 403
@@ -81,7 +93,12 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <ErrorMessage message={error} />
-      {review && <ReviewCard review={review} isMine={isMine} />}
+      {alreadyReviewed && isMine && (
+        <Text style={[styles.notice, styles.alreadyReviewed]} accessibilityRole="alert">
+          Você já avaliou este local. Para mudar algo, edite a sua avaliação.
+        </Text>
+      )}
+      {review && <ReviewCard review={review} isMine={isMine} showPlace={!!review.placeName} />}
       {underReview && (
         <Text style={styles.notice} accessibilityLiveRegion="polite">
           Esta avaliação está em análise e não aparece para outras pessoas.
@@ -105,7 +122,13 @@ export default function ReviewDetailScreen({ reviewId }: { reviewId: string }) {
               {reportNotice}
             </Text>
           ) : !user ? (
-            <Button title="Entrar para denunciar" variant="secondary" onPress={() => router.push('/login')} />
+            <Button
+              title="Entrar para denunciar"
+              variant="secondary"
+              onPress={() =>
+                router.push({ pathname: '/login', params: { redirect: `/avaliacoes/${encodeURIComponent(reviewId)}` } })
+              }
+            />
           ) : reporting ? (
             <ReportReviewForm
               reviewId={reviewId}
@@ -135,4 +158,5 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   actions: { gap: spacing.sm, marginTop: spacing.md },
   notice: { fontSize: 15, color: colors.text, textAlign: 'center' },
+  alreadyReviewed: { marginBottom: spacing.md },
 });

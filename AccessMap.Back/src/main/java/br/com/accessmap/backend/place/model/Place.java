@@ -26,6 +26,9 @@ public class Place {
     @Column(nullable = false, unique = true)
     private String placeId;
 
+    /** Nome do Google na última avaliação que o informou; pode ser {@code null} em locais antigos. */
+    private String name;
+
     @Builder.Default
     private Double averageScore = 0.0;
 

@@ -9,7 +9,11 @@ import ErrorMessage from '../components/ErrorMessage';
 import ReviewCard from '../components/ReviewCard';
 import { colors, spacing } from '../constants/theme';
 
-export default function ReviewListScreen({ placeId }: { placeId: string }) {
+/** Avaliações de um local, ou as de um usuário ("Minhas avaliações", que mostra o nome de cada local). */
+type Props = { placeId: string; userId?: never } | { userId: string; placeId?: never };
+
+export default function ReviewListScreen({ placeId, userId }: Props) {
+  const byUser = !!userId;
   const [reviews, setReviews] = useState<Review[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -22,7 +26,7 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
     async (pageNumber: number) => {
       setError(null);
       try {
-        const result = await reviewsApi.list({ placeId, page: pageNumber });
+        const result = await reviewsApi.list({ placeId, userId, page: pageNumber });
         setReviews((prev) => (pageNumber === 0 ? result.content : [...prev, ...result.content]));
         setPage(result.page.number);
         setTotalPages(result.page.totalPages);
@@ -34,7 +38,7 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
         setRefreshing(false);
       }
     },
-    [placeId],
+    [placeId, userId],
   );
 
   // Recarrega do início ao voltar para a tela: uma avaliação pode ter sido editada ou excluída no detalhe
@@ -68,6 +72,7 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
         <ReviewCard
           review={item}
           isMine={item.mine}
+          showPlace={byUser}
           onPress={() => router.push({ pathname: '/avaliacoes/[id]', params: { id: item.id } })}
         />
       )}
@@ -84,10 +89,16 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
             <ErrorMessage message={error} />
             <Button title="Tentar novamente" variant="secondary" onPress={() => loadPage(reviews.length ? page + 1 : 0)} />
           </View>
-        ) : null
+        ) : undefined
       }
-      ListEmptyComponent={!error ? <Text style={styles.empty}>Nenhuma avaliação ainda.</Text> : null}
-      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null}
+      ListEmptyComponent={
+        !error ? (
+          <Text style={styles.empty}>
+            {byUser ? 'Você ainda não avaliou nenhum local.' : 'Nenhuma avaliação ainda.'}
+          </Text>
+        ) : undefined
+      }
+      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : undefined}
     />
   );
 }

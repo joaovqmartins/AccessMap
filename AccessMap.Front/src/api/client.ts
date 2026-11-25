@@ -1,7 +1,12 @@
 import { tokenStorage } from '../auth/tokenStorage';
+import { resolveApiBaseUrl } from './baseUrl';
 import type { TokenResponse } from './types';
 
-const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8080').replace(/\/$/, '');
+const BASE_URL = resolveApiBaseUrl();
+
+// Sem limite, uma API fora do ar deixa o botão girando até o sistema desistir da conexão (dezenas de segundos)
+const REQUEST_TIMEOUT_MS = 15_000;
+const CONNECTION_ERROR = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
 
 export class ApiError extends Error {
   constructor(
@@ -92,13 +97,20 @@ function send(path: string, { method = 'GET', body, query }: RequestOptions, aut
   const token = auth ? tokenStorage.getAccessToken() : null;
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  // AbortController + setTimeout em vez de AbortSignal.timeout: funciona igual no navegador e no Hermes
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   return fetch(BASE_URL + path + toQueryString(query), {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  }).catch(() => {
-    throw new ApiError(0, 'Não foi possível conectar ao servidor. Verifique sua conexão.');
-  });
+    signal: controller.signal,
+  })
+    .catch(() => {
+      throw new ApiError(0, CONNECTION_ERROR);
+    })
+    .finally(() => clearTimeout(timer));
 }
 
 function toQueryString(query?: RequestOptions['query']) {
