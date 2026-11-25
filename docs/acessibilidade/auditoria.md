@@ -47,6 +47,24 @@ O AccessMap existe para ajudar pessoas com deficiência e mobilidade reduzida, e
 - 28 pares de contraste passando;
 - axe sem violações graves nas 10 telas e painéis cobertos.
 
+## Paleta da logo (novembro de 2026)
+O app passou a usar as cores da logo, no lugar do azul e branco. Cada cor que carrega texto é um tom mais fechado da original, para manter o AA:
+
+| Token | Cor | Na logo | Contraste |
+|---|---|---|---|
+| `brand` | `#1C2B7F` | contorno azul-marinho (cabeçalhos) | branco: 12,3:1 |
+| `primary` | `#1A56C4` | cadeira de rodas (botões, links) | branco: 6,6:1 |
+| `accent` / `danger` | `#C2263F` | pin coral (avatar, "Avaliar", aba ativa, erros) | branco: 5,8:1 (o coral original `#F2455C` dava 3,6:1) |
+| `success` | `#17733F` | mapa verde | branco: 5,9:1 (o verde original `#2BB673` dava 2,6:1) |
+| `warning` | `#9A4C00` | detalhes laranja | branco: 6,2:1 |
+| `star` | `#FDB927` | amarelo | decorativa no branco; a nota sempre vem em texto |
+
+- **Cores vivas da logo:** só como enfeite. O `accentBright` aparece nas bolinhas do menu, com 3,6:1 no branco.
+- **Categorias da Home:** cada uma tem cor própria (`categoryColors`, em rodízio). O teste confere o branco sobre a cor cheia, o texto sobre o fundo suave e a cor cheia sobre o fundo suave.
+- **Aba ativa:** ganhou um traço em cima, então não depende só da cor.
+- **Pinos do mapa:** seguem as cores nativas do Android, como antes, para a legenda bater com o mapa.
+- **Resultado:** 55 pares de contraste passando e o axe sem violações nas telas cobertas pelo e2e.
+
 ## Roteiro manual no aparelho
 Faça no iPhone (VoiceOver) e num Android (TalkBack), com o app no Expo Go. Anote abaixo o que não funcionar.
 

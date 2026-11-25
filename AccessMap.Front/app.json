@@ -30,7 +30,8 @@
         {
           "locationWhenInUsePermission": "O AccessMap usa sua localização para mostrar locais acessíveis perto de você."
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

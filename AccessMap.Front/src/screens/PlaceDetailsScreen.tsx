@@ -128,6 +128,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
             {!user ? (
               <Button
                 title="Entrar para avaliar"
+                variant="accent"
                 // Depois de entrar (ou se cadastrar), abre direto o formulário deste local (#102)
                 onPress={() => router.push({ pathname: '/login', params: { redirect: reviewFormPath(placeId, name) } })}
               />
@@ -140,6 +141,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
             ) : (
               <Button
                 title="Avaliar este local"
+                variant="accent"
                 onPress={() => router.push({ pathname: '/locais/[placeId]/avaliar', params: { placeId, name } })}
               />
             )}
@@ -188,14 +190,23 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   section: {
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
-  placeName: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: spacing.sm },
-  scoreRow: { flexDirection: 'row', alignItems: 'center' },
+  placeName: { fontSize: 22, fontWeight: 'bold', color: colors.brand, marginBottom: spacing.sm },
+  // Nota num selo amarelo-suave, como o sol da logo
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.warningBackground,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   score: { fontSize: 40, fontWeight: 'bold', color: colors.text, marginRight: spacing.md },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.brand, marginBottom: spacing.md },
   muted: { fontSize: 14, color: colors.textMuted },
   cta: { marginBottom: spacing.md },
   link: {
