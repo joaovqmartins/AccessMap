@@ -15,7 +15,7 @@ import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
 
 type Props =
-  | { mode: 'create'; placeId: string }
+  | { mode: 'create'; placeId: string; placeName?: string }
   | { mode: 'edit'; reviewId: string };
 
 type Errors = { rating?: string; tags?: string };
@@ -80,6 +80,7 @@ export default function ReviewFormScreen(props: Props) {
       if (props.mode === 'create') {
         await reviewsApi.create({
           placeId: props.placeId,
+          placeName: props.placeName || undefined,
           rating,
           comment: comment.trim() || undefined,
           tags,

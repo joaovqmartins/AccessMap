@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -99,6 +101,30 @@ public class PlaceService {
                                 .updatedAt(LocalDateTime.now())
                                 .build()
                 ));
+    }
+
+    /** Guarda o nome que o app mandou, se veio um e é diferente do salvo (o Google pode renomear o local). */
+    public void updateName(Place place, String name) {
+        if (name == null || name.isBlank() || name.strip().equals(place.getName())) {
+            return;
+        }
+        place.setName(name.strip());
+        place.setUpdatedAt(LocalDateTime.now());
+        placeRepository.save(place);
+    }
+
+    /** Nome salvo de cada local, numa consulta só; locais sem nome ou desconhecidos ficam de fora do mapa. */
+    public Map<String, String> namesByPlaceId(Collection<String> placeIds) {
+        if (placeIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, String> names = new HashMap<>();
+        for (Place place : placeRepository.findByPlaceIdIn(placeIds)) {
+            if (place.getName() != null) {
+                names.put(place.getPlaceId(), place.getName());
+            }
+        }
+        return names;
     }
 
     /**

@@ -96,6 +96,7 @@ public class ReviewService {
         reviewRateLimiter.check(author);
 
         Place place = placeService.findOrCreateByPlaceId(request.getPlaceId());
+        placeService.updateName(place, request.getPlaceName());
         TrustLevel level = reviewTrustCalculator.levelOf(author);
         boolean outlier = suspicionRules.isRatingOutlier(
                 level, request.getRating(), place.getReviewCount(), place.getAverageScore());

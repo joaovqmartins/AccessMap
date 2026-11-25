@@ -96,6 +96,8 @@ export interface PlaceBatchRequest {
 export interface Review {
   id: string;
   placeId: string;
+  /** Nome do local salvo quando alguém avaliou; `null` em locais antigos. */
+  placeName?: string | null;
   rating: number;
   comment: string | null;
   tags: ReviewTags;
@@ -141,6 +143,8 @@ export type ReviewTags = Partial<Record<AccessibilityTag, TagAssessment>>;
 
 export interface ReviewRequest {
   placeId: string;
+  /** Nome do Google, para listas sem o nome por perto (Minhas avaliações). */
+  placeName?: string;
   rating: number;
   comment?: string;
   tags: ReviewTags;

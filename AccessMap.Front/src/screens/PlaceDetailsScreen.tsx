@@ -124,7 +124,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
             ) : (
               <Button
                 title="Avaliar este local"
-                onPress={() => router.push({ pathname: '/locais/[placeId]/avaliar', params: { placeId } })}
+                onPress={() => router.push({ pathname: '/locais/[placeId]/avaliar', params: { placeId, name } })}
               />
             )}
           </View>
