@@ -160,7 +160,9 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
     void deleteMeRemoveAContaEOTokenDeixaDeResolverUmUsuario() throws Exception {
         JsonNode tokens = registrar(telefoneUnico());
 
-        mockMvc.perform(delete("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
+        mockMvc.perform(delete("/api/users/me").header(HttpHeaders.AUTHORIZATION, bearer(tokens))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("currentPassword", SENHA))))
                 .andExpect(status().isOk());
 
         // o JWT ainda é criptograficamente válido, mas o usuário não existe mais

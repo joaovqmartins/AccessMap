@@ -1,5 +1,6 @@
 package br.com.accessmap.backend.identity.controller;
 
+import br.com.accessmap.backend.identity.dto.DeleteAccountRequestDto;
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.service.UserService;
@@ -49,10 +50,18 @@ public class UserController {
         return ResponseEntity.ok(userService.update(jwt.getSubject(), request));
     }
 
-    @Operation(summary = "Remove a conta do usuário autenticado")
+    @Operation(summary = "Remove a conta do usuário autenticado",
+            description = "Exige a senha atual. As avaliações continuam publicadas, mas sem ligação com a pessoa "
+                    + "e sem as necessidades declaradas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Conta removida"),
+            @ApiResponse(responseCode = "400", description = "Senha ausente ou incorreta"),
+            @ApiResponse(responseCode = "401", description = "Requer autenticação")
+    })
     @DeleteMapping("/me")
-    public ResponseEntity<Map<String, String>> deleteMe(@AuthenticationPrincipal Jwt jwt) {
-        userService.delete(jwt.getSubject());
+    public ResponseEntity<Map<String, String>> deleteMe(@AuthenticationPrincipal Jwt jwt,
+                                                        @Valid @RequestBody DeleteAccountRequestDto request) {
+        userService.deleteOwnAccount(jwt.getSubject(), request.getCurrentPassword());
         return ResponseEntity.ok(Map.of("message", "Conta removida com sucesso"));
     }
 

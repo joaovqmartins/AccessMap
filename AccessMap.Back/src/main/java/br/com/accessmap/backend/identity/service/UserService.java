@@ -2,6 +2,7 @@ package br.com.accessmap.backend.identity.service;
 
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
 import br.com.accessmap.backend.identity.event.PasswordChangedEvent;
+import br.com.accessmap.backend.identity.event.UserDeletedEvent;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -95,8 +97,21 @@ public class UserService {
         return saved;
     }
 
+    /** Excluir a própria conta: confere a senha antes, como na troca de senha. */
+    @Transactional
+    public void deleteOwnAccount(String id, String currentPassword) {
+        User existing = findById(id);
+        if (!passwordEncoder.matches(currentPassword, existing.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha atual incorreta");
+        }
+        delete(id);
+    }
+
+    /** Antes de apagar, avisa quem guarda dados da pessoa (ex.: avaliações), na mesma transação. */
+    @Transactional
     public void delete(String id) {
         findById(id);
+        eventPublisher.publishEvent(new UserDeletedEvent(id));
         userRepository.deleteById(id);
     }
 

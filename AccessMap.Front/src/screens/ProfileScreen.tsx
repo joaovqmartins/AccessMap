@@ -8,6 +8,7 @@ import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ChangePasswordForm from '../components/ChangePasswordForm';
+import DeleteAccountForm from '../components/DeleteAccountForm';
 import ErrorMessage from '../components/ErrorMessage';
 import NeedsSelector from '../components/NeedsSelector';
 import TextField from '../components/TextField';
@@ -38,7 +39,7 @@ function toForm(user: User): Form {
 
 export default function ProfileScreen() {
   const { user, refreshUser, signOut } = useAuth();
-  const [mode, setMode] = useState<'view' | 'editing' | 'password'>('view');
+  const [mode, setMode] = useState<'view' | 'editing' | 'password' | 'delete'>('view');
   const [form, setForm] = useState<Form | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -118,7 +119,12 @@ export default function ProfileScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {mode === 'password' ? (
+        {mode === 'delete' ? (
+          <View style={styles.section}>
+            <Text style={styles.name} accessibilityRole="header">Excluir minha conta</Text>
+            <DeleteAccountForm onCancel={() => setMode('view')} onDeleted={signOut} />
+          </View>
+        ) : mode === 'password' ? (
           <View style={styles.section}>
             <Text style={styles.name} accessibilityRole="header">Alterar senha</Text>
             <ChangePasswordForm onCancel={() => setMode('view')} onChanged={signOut} />
@@ -200,6 +206,14 @@ export default function ProfileScreen() {
                 <Button title="Moderação" variant="secondary" onPress={() => router.push('/moderacao')} />
               )}
               <Button title="Sair da conta" variant="secondary" onPress={signOut} />
+              <Button
+                title="Excluir minha conta"
+                variant="danger"
+                onPress={() => {
+                  setSuccess(null);
+                  setMode('delete');
+                }}
+              />
             </View>
           </>
         )}
