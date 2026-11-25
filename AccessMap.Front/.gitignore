@@ -8,6 +8,9 @@ node_modules/
 
 # Resultados e prints do Playwright
 e2e-results/
+
+# Relatório de cobertura do Jest (npm test -- --coverage)
+coverage/
 dist/
 web-build/
 expo-env.d.ts
