@@ -63,7 +63,7 @@ class UserServiceTest {
     @Test
     void deveCriarUsuarioComDadosValidos() {
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User criado = userService.create(validRequest());
@@ -105,7 +105,7 @@ class UserServiceTest {
     @Test
     void deveRejeitarCriacaoComEmailJaCadastrado() {
         when(userRepository.existsByPhone("11999999999")).thenReturn(false);
-        when(userRepository.existsByEmail("maria@email.com")).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase("maria@email.com")).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.create(validRequest()));
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
@@ -138,7 +138,7 @@ class UserServiceTest {
 
         assertThat(criado.getEmail()).isNull();
         assertThat(criado.getAge()).isNull();
-        verify(userRepository, never()).existsByEmail(anyString());
+        verify(userRepository, never()).existsByEmailIgnoreCase(anyString());
     }
 
     @Test

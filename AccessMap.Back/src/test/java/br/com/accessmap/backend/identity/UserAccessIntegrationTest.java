@@ -60,6 +60,7 @@ class UserAccessIntegrationTest extends AbstractIntegrationTest {
                                 "name", "Maria",
                                 "phone", telefone,
                                 "password", SENHA,
+                                "email", emailUnico(),
                                 "age", 30,
                                 "accessibilityNeeds", new String[]{"MOBILIDADE_REDUZIDA"}))))
                 .andExpect(status().isCreated())

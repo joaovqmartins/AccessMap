@@ -50,7 +50,8 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         return Map.of(
                 "name", "Maria",
                 "phone", telefone,
-                "password", SENHA
+                "password", SENHA,
+                "email", emailUnico()
         );
     }
 
@@ -112,6 +113,35 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.campos.phone").exists())
                 .andExpect(jsonPath("$.campos.email").exists())
                 .andExpect(jsonPath("$.campos.password").exists());
+    }
+
+    @Test
+    void cadastroSemEmailEhRecusado() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("name", "Maria", "phone", telefoneUnico(), "password", SENHA))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.email").exists());
+    }
+
+    @Test
+    void emailEhGravadoEmMinusculasEConflitaSemDiferenciarCaixa() throws Exception {
+        String email = emailUnico();
+        String telefone = telefoneUnico();
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("name", "Maria", "phone", telefone, "password", SENHA,
+                                "email", email.toUpperCase()))))
+                .andExpect(status().isCreated());
+
+        assertThat(userRepository.findByPhone(telefone).orElseThrow().getEmail()).isEqualTo(email);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("name", "Maria", "phone", telefoneUnico(), "password", SENHA,
+                                "email", email.toUpperCase()))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem").value("E-mail já está em uso"));
     }
 
     // ---------- login ----------

@@ -146,7 +146,7 @@ class AccountDeletionIntegrationTest extends AbstractIntegrationTest {
         String telefone = telefoneUnico();
         String corpo = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("name", "Maria", "phone", telefone, "password", SENHA))))
+                        .content(json(Map.of("name", "Maria", "phone", telefone, "password", SENHA, "email", emailUnico()))))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String refreshToken = objectMapper.readTree(corpo).get("refreshToken").asString();

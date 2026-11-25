@@ -106,15 +106,16 @@ class ConcurrentDuplicateIntegrationTest extends AbstractIntegrationTest {
     @Test
     void cadastroDuplicadoSimultaneoRespondeConflito() throws Exception {
         for (int rodada = 0; rodada < RODADAS; rodada++) {
-            String corpo = objectMapper.writeValueAsString(Map.of(
-                    "name", "Maria",
-                    "phone", telefoneUnico(),
-                    "password", "senhaForte123"
-            ));
+            String telefone = telefoneUnico();
 
+            // Mesmo telefone e e-mails diferentes: o conflito esperado é só o do telefone
             List<MockHttpServletResponse> respostas = simultaneas(() -> post("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(corpo));
+                    .content(objectMapper.writeValueAsString(Map.of(
+                            "name", "Maria",
+                            "phone", telefone,
+                            "password", "senhaForte123",
+                            "email", emailUnico()))));
 
             assertUmCriadoEUmConflito(respostas, UserService.TELEFONE_EM_USO);
         }

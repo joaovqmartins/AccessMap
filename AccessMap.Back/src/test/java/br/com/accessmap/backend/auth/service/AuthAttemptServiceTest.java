@@ -42,7 +42,7 @@ class AuthAttemptServiceTest {
 
     @BeforeEach
     void montar() {
-        service = new AuthAttemptService(repository, new AuthRateLimitProperties(Duration.ofMinutes(15), 5, 20, 10));
+        service = new AuthAttemptService(repository, new AuthRateLimitProperties(Duration.ofMinutes(15), 5, 20, 10, 10, 3));
     }
 
     private void tentativas(AuthAttemptKind kind, long total) {
