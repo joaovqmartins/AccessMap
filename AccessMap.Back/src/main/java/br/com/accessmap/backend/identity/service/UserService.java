@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -39,13 +40,14 @@ public class UserService {
 
     public User create(UserRequestDto request) {
         validateRequiredFields(request);
-        // E-mail é opcional: string vazia vira null, senão dois cadastros sem e-mail colidiriam no UNIQUE.
-        String email = isBlank(request.getEmail()) ? null : request.getEmail();
+        // O cadastro pelo app exige e-mail (#109), mas o ADMIN semeado pode vir sem: vazio vira null,
+        // senão dois cadastros sem e-mail colidiriam no UNIQUE.
+        String email = isBlank(request.getEmail()) ? null : normalizeEmail(request.getEmail());
 
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, TELEFONE_EM_USO);
         }
-        if (email != null && userRepository.existsByEmail(email)) {
+        if (email != null && userRepository.existsByEmailIgnoreCase(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, EMAIL_EM_USO);
         }
 
@@ -81,7 +83,7 @@ public class UserService {
         }
 
         if (request.getName() != null) existing.setName(request.getName());
-        if (request.getEmail() != null) existing.setEmail(request.getEmail());
+        if (request.getEmail() != null) existing.setEmail(normalizeEmail(request.getEmail()));
         if (request.getPhone() != null) existing.setPhone(request.getPhone());
         if (request.getAge() != null) existing.setAge(request.getAge());
         if (request.getAccessibilityNeeds() != null) existing.setAccessibilityNeeds(request.getAccessibilityNeeds());
@@ -149,6 +151,11 @@ public class UserService {
         if (request.getAge() != null && request.getAge() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "age deve ser um número positivo");
         }
+    }
+
+    /** Minúsculas e sem espaços nas pontas: a recuperação de senha procura a conta pelo e-mail. */
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private boolean isBlank(String value) {

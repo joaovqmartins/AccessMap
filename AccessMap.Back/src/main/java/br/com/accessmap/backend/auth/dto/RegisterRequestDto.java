@@ -13,7 +13,7 @@ import lombok.Data;
 
 import java.util.Set;
 
-/** Cadastro simplificado: telefone, senha e nome. O resto é opcional e pode ser completado no perfil. */
+/** Cadastro simplificado: telefone, senha, nome e e-mail (para recuperar a senha, #109). O resto se completa no perfil. */
 @Data
 public class RegisterRequestDto {
 
@@ -30,6 +30,7 @@ public class RegisterRequestDto {
     @Size(max = FieldLimits.TEXT_MAX, message = "Nome deve ter no máximo 255 caracteres")
     private String name;
 
+    @NotBlank(message = "email é obrigatório")
     @Email(message = "Email inválido")
     @Size(max = FieldLimits.TEXT_MAX, message = "E-mail deve ter no máximo 255 caracteres")
     private String email;

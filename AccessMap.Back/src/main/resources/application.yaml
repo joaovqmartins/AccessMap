@@ -53,11 +53,23 @@ accessmap:
       login-per-phone: ${AUTH_LIMIT_LOGIN_PER_PHONE:5}
       login-per-ip: ${AUTH_LIMIT_LOGIN_PER_IP:20}
       register-per-ip: ${AUTH_LIMIT_REGISTER_PER_IP:10}
+      # Pedidos de codigo de recuperacao de senha (#109), contando todos e nao so os falhos
+      reset-per-ip: ${AUTH_LIMIT_RESET_PER_IP:10}
+      reset-per-email: ${AUTH_LIMIT_RESET_PER_EMAIL:3}
+    password-reset:
+      code-ttl: 15m
+      max-attempts: 5
     # Apaga os refresh tokens expirados e os revogados ha mais que a retencao. Os revogados
     # recentes ficam: a deteccao de reuso (token ja usado derruba todas as sessoes) depende deles.
     refresh-cleanup:
       cron: ${REFRESH_CLEANUP_CRON:0 0 4 * * *}
       revoked-retention: ${REFRESH_CLEANUP_REVOKED_RETENTION:7d}
+  # E-mail pela API HTTP do Brevo (o Railway bloqueia SMTP). Sem chave, nada e enviado: o codigo vai para o log.
+  mail:
+    brevo-api-key: ${BREVO_API_KEY:}
+    from: ${MAIL_FROM:nao-responda@accessmap.local}
+    from-name: ${MAIL_FROM_NAME:AccessMap}
+    log-content: true
   review:
     # Valores provisorios ate as regras da #27. Trocar aqui ou pelas variaveis nao exige mudar codigo.
     rate-limit:

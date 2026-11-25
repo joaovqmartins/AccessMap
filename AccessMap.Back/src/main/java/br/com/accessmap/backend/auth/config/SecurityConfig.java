@@ -22,7 +22,7 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 @EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, AuthRateLimitProperties.class,
-        RefreshTokenCleanupProperties.class})
+        RefreshTokenCleanupProperties.class, PasswordResetProperties.class})
 public class SecurityConfig {
 
     @Bean

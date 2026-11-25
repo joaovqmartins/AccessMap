@@ -26,3 +26,8 @@ server:
   port: ${PORT:8080}
   # Atras do proxy do Railway: sem isso, o limite de login por IP veria todo mundo como um IP so (#107)
   forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
+
+accessmap:
+  mail:
+    # Sem BREVO_API_KEY o codigo de recuperacao de senha nao pode aparecer no log de producao
+    log-content: false

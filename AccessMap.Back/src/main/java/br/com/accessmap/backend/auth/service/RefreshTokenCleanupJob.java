@@ -1,6 +1,7 @@
 package br.com.accessmap.backend.auth.service;
 
 import br.com.accessmap.backend.auth.config.RefreshTokenCleanupProperties;
+import br.com.accessmap.backend.auth.repository.PasswordResetCodeRepository;
 import br.com.accessmap.backend.auth.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 public class RefreshTokenCleanupJob {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
     private final RefreshTokenCleanupProperties props;
 
     @Scheduled(cron = "${accessmap.auth.refresh-cleanup.cron}")
@@ -29,5 +31,7 @@ public class RefreshTokenCleanupJob {
         int removed = refreshTokenRepository.deleteExpiredOrRevokedBefore(now, now.minus(props.revokedRetention()));
         log.info("Limpeza de refresh tokens: {} removidos (expirados ou revogados há mais de {})",
                 removed, props.revokedRetention());
+        int codes = passwordResetCodeRepository.deleteExpiredOrUsed(now);
+        log.info("Limpeza de códigos de recuperação de senha: {} removidos", codes);
     }
 }
