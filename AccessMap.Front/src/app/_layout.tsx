@@ -56,7 +56,7 @@ function RootNavigator() {
         <Stack.Screen name="moderacao" options={{ title: 'Moderação' }} />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
-        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false, title: 'Entrar' }} />
         <Stack.Screen name="(auth)/cadastro" options={{ title: 'Cadastro' }} />
       </Stack.Protected>
       {/* Leitura pública, como no backend */}
