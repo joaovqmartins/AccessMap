@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import type { AccessibilityTag, AdminReview, TagAssessment } from '../api/types';
 import { ASSESSMENT_LABELS, MODERATION_STATUS_LABELS, SUSPICION_REASON_LABELS, TAG_LABELS } from '../constants/labels';
-import { assessmentColors, colors, spacing } from '../constants/theme';
+import { assessmentColors, colors, spacing, MIN_FONT_SIZE } from '../constants/theme';
 import Button from './Button';
 import StarRating from './StarRating';
 
@@ -98,6 +98,6 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
     marginBottom: spacing.xs,
   },
-  chipText: { fontSize: 12, color: colors.text },
+  chipText: { fontSize: MIN_FONT_SIZE, color: colors.text },
   actions: { gap: spacing.sm, marginTop: spacing.sm },
 });

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { isGooglePlacesConfigured, type PlaceSuggestion } from '../api/googlePlaces';
-import { MIN_TOUCH, colors, spacing } from '../constants/theme';
+import { MIN_TOUCH, colors, spacing, MIN_FONT_SIZE } from '../constants/theme';
 import { MIN_QUERY_LENGTH, usePlaceAutocomplete } from '../hooks/usePlaceAutocomplete';
 import ErrorMessage from './ErrorMessage';
 
@@ -97,7 +97,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minHeight: MIN_TOUCH,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.surfaceMuted,
+    // Sem borda, o cinza claro do campo some no cabeçalho branco (1,1:1); a borda marca onde digitar
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     paddingLeft: spacing.md,
     paddingRight: MIN_TOUCH,
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
   mainText: { fontSize: 16, fontWeight: '600', color: colors.text },
   secondaryText: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
   attribution: {
-    fontSize: 12,
+    fontSize: MIN_FONT_SIZE,
     color: colors.textMuted,
     textAlign: 'right',
     paddingHorizontal: spacing.md,
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
   notice: {
     fontSize: 14,
     color: colors.warning,
-    backgroundColor: '#FFF4E5',
+    backgroundColor: colors.warningBackground,
     borderRadius: 8,
     padding: spacing.sm + 4,
   },

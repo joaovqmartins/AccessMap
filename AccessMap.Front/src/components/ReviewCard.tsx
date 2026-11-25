@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { AccessibilityTag, Review } from '../api/types';
 import { ASSESSMENT_LABELS, NEED_LABELS, TAG_LABELS, TRUST_BADGE_LABELS } from '../constants/labels';
-import { assessmentColors, colors, spacing } from '../constants/theme';
+import { assessmentColors, colors, spacing, MIN_FONT_SIZE } from '../constants/theme';
 import StarRating from './StarRating';
 
 type Props = {
@@ -88,6 +88,6 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
     marginBottom: spacing.xs,
   },
-  chipText: { fontSize: 12, color: colors.text },
-  needs: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs, fontStyle: 'italic' },
+  chipText: { fontSize: MIN_FONT_SIZE, color: colors.text },
+  needs: { fontSize: MIN_FONT_SIZE, color: colors.textMuted, marginTop: spacing.xs, fontStyle: 'italic' },
 });

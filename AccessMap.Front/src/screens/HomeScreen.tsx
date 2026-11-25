@@ -109,7 +109,9 @@ export default function HomeScreen() {
             style={styles.userAvatar}
             onPress={() => router.push('/perfil')}
             accessibilityRole="button"
-            accessibilityLabel="Meu perfil"
+            // As iniciais visíveis entram no nome (WCAG 2.5.3, rótulo no nome), depois do que o botão faz.
+            // Sem parênteses: o leitor de tela e o axe tratam texto entre parênteses como comentário.
+            accessibilityLabel={`Meu perfil, ${initials(user?.name)}`}
           >
             <Text style={styles.avatarText}>{initials(user?.name)}</Text>
           </TouchableOpacity>
@@ -150,6 +152,7 @@ export default function HomeScreen() {
                     style={[styles.segment, selected && styles.optionPillSelected]}
                     onPress={() => setView(v)}
                     accessibilityRole="radio"
+                    aria-checked={selected}
                     accessibilityState={{ checked: selected }}
                     accessibilityLabel={v === 'lista' ? 'Ver em lista' : 'Ver no mapa'}
                   >
@@ -241,7 +244,8 @@ export default function HomeScreen() {
         />
         <BottomTab
           label="Review"
-          accessibilityLabel="Minhas avaliações"
+          // O nome começa pelo texto visível (WCAG 2.5.3): quem usa controle por voz fala "Review"
+          accessibilityLabel="Review: minhas avaliações"
           selected={false}
           onPress={() => router.push('/minhas-avaliacoes')}
         />
@@ -313,15 +317,15 @@ function LocationNotice({ location, onRequest }: { location: LocationState; onRe
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
   
   // --- Estilos do Cabeçalho ---
   header: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   topRow: {
     flexDirection: 'row',
@@ -337,18 +341,18 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 24,
-    color: '#333',
+    color: colors.text,
   },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007BFF',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    color: '#FFF',
+    color: colors.onPrimary,
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
   // --- Estilos das Opções (Filtros) ---
   optionsContainer: {
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
   },
   optionsContent: {
     paddingRight: 16,
@@ -364,7 +368,7 @@ const styles = StyleSheet.create({
   optionPill: {
     minHeight: MIN_TOUCH,
     justifyContent: 'center',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
     paddingHorizontal: 16,
     borderRadius: MIN_TOUCH / 2,
     marginLeft: 16,
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   optionText: {
-    color: '#333',
+    color: colors.text,
     fontWeight: '500',
   },
   optionTextSelected: {
@@ -394,7 +398,7 @@ const styles = StyleSheet.create({
   },
   segmented: {
     flexDirection: 'row',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -417,7 +421,7 @@ const styles = StyleSheet.create({
   toolButton: {
     minHeight: MIN_TOUCH,
     justifyContent: 'center',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
@@ -442,10 +446,10 @@ const styles = StyleSheet.create({
   bottomNavigation: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     paddingVertical: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: colors.border,
   },
   navButton: {
     flex: 1,
@@ -460,6 +464,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   navTextActive: {
-    color: '#007BFF', // Destaca a rota atual
+    color: colors.primary, // Destaca a rota atual
   },
 });
