@@ -50,6 +50,7 @@ export async function newAccount(): Promise<Account> {
   const created = await post<{ accessToken: string; user: { id: string } }>('/api/auth/register', {
     name: 'Pessoa E2E',
     phone,
+    email: `e2e-${phone}-${Date.now()}@teste.com`,
     password: PASSWORD,
   });
   return { id: created.user.id, phone, token: created.accessToken };

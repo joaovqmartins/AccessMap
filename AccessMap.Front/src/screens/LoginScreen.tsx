@@ -93,6 +93,14 @@ export default function LoginScreen() {
           <Button title="Entrar" onPress={handleSubmit} loading={submitting} />
 
           <Link
+            href={redirect ? { pathname: '/esqueci-senha', params: { redirect } } : '/esqueci-senha'}
+            style={styles.link}
+            accessibilityRole="link"
+          >
+            Esqueci minha senha
+          </Link>
+
+          <Link
             href={redirect ? { pathname: '/cadastro', params: { redirect } } : '/cadastro'}
             style={styles.link}
             accessibilityRole="link"

@@ -117,6 +117,7 @@ test('sem conta, o cadastro também volta ao formulário do local (#102)', async
   // getByRole: a tela de login continua montada (escondida) embaixo do cadastro, com os mesmos rótulos
   await page.getByRole('textbox', { name: 'Nome' }).fill('Pessoa E2E');
   await page.getByRole('textbox', { name: 'Telefone' }).fill(`119${String(Date.now()).slice(-8)}`);
+  await page.getByRole('textbox', { name: 'E-mail' }).fill(`${unique('e2e')}@teste.com`);
   await page.getByRole('textbox', { name: 'Senha', exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Cadastrar' }).click();
 

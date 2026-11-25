@@ -15,6 +15,7 @@ import TextField from '../components/TextField';
 import { NEED_LABELS } from '../constants/labels';
 import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
+import { isValidEmail } from '../utils/email';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
 
 type Form = {
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
     if (!f.name.trim()) next.name = 'Informe seu nome';
     if (!isValidPhone(f.phone)) next.phone = 'Informe um telefone com DDD (10 ou 11 dígitos)';
     const email = f.email.trim();
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'E-mail inválido';
+    if (email && !isValidEmail(email)) next.email = 'E-mail inválido';
     if (!email && original.email) next.email = 'O e-mail não pode ser removido, apenas alterado';
     if (f.age) {
       const age = Number(f.age);
@@ -142,7 +143,7 @@ export default function ProfileScreen() {
               error={errors.phone}
             />
             <TextField
-              label="E-mail (opcional)"
+              label="E-mail (para recuperar a senha)"
               value={form.email}
               onChangeText={(v) => set('email', v)}
               maxLength={TEXT_MAX}

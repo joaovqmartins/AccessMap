@@ -8,12 +8,14 @@ import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
-import { PASSWORD_MAX_BYTES, PASSWORD_TOO_LONG, TEXT_MAX, utf8Length } from '../constants/limits';
+import { PASSWORD_MAX_BYTES, TEXT_MAX } from '../constants/limits';
+import { isValidEmail } from '../utils/email';
 import { safeRedirect, setPendingRedirect } from '../utils/navigation';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
+import { validateNewPassword } from '../utils/password';
 import { authStyles as styles } from './LoginScreen';
 
-type Field = 'name' | 'phone' | 'password';
+type Field = 'name' | 'phone' | 'email' | 'password';
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
@@ -21,6 +23,7 @@ export default function RegisterScreen() {
   const redirect = safeRedirect(useLocalSearchParams<{ redirect?: string }>().redirect);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -31,8 +34,9 @@ export default function RegisterScreen() {
     const next: Partial<Record<Field, string>> = {};
     if (!name.trim()) next.name = 'Informe seu nome';
     if (!isValidPhone(phone)) next.phone = 'Informe um telefone com DDD (10 ou 11 dígitos)';
-    if (password.length < 8) next.password = 'A senha deve ter no mínimo 8 caracteres';
-    else if (utf8Length(password) > PASSWORD_MAX_BYTES) next.password = PASSWORD_TOO_LONG;
+    if (!isValidEmail(email)) next.email = 'Informe um e-mail válido';
+    const passwordError = validateNewPassword(password);
+    if (passwordError) next.password = passwordError;
     return next;
   }
 
@@ -45,7 +49,7 @@ export default function RegisterScreen() {
     setSubmitting(true);
     try {
       setPendingRedirect(redirect);
-      await signUp({ name: name.trim(), phone, password });
+      await signUp({ name: name.trim(), phone, email: email.trim(), password });
     } catch (e) {
       setPendingRedirect(null);
       if (e instanceof ApiError) {
@@ -65,7 +69,7 @@ export default function RegisterScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.title} accessibilityRole="header">Criar conta</Text>
           <Text style={styles.subtitle}>
-            E-mail, idade e necessidades de acessibilidade podem ser informados depois, no perfil.
+            Idade e necessidades de acessibilidade podem ser informadas depois, no perfil.
           </Text>
 
           <ErrorMessage message={formError} />
@@ -88,6 +92,18 @@ export default function RegisterScreen() {
             textContentType="telephoneNumber"
             placeholder="(11) 91234-5678"
             error={errors.phone}
+          />
+          <TextField
+            label="E-mail"
+            value={email}
+            onChangeText={setEmail}
+            maxLength={TEXT_MAX}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            placeholder="Usado para recuperar a senha"
+            error={errors.email}
           />
           <TextField
             label="Senha"
