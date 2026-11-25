@@ -2,6 +2,7 @@
 
 [![Backend](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml)
 [![App](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml)
+[![E2E](https://github.com/joaovqmartins/AccessMap/actions/workflows/e2e.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/e2e.yml)
 
 O AccessMap é um aplicativo mobile que permite à comunidade mapear colaborativamente pontos de acessibilidade e barreiras urbanas. 
 
@@ -97,10 +98,11 @@ As rotas são tipadas (`typedRoutes` no `app.json`). O `npx expo start` gera os 
 
 ### CI (GitHub Actions)
 
-Todo PR e todo push na `main` rodam dois workflows, cada um só quando a pasta dele muda:
+Todo PR e todo push na `main` rodam três workflows, cada um só quando as pastas dele mudam:
 
 - **Backend** (`.github/workflows/backend.yml`): `./mvnw test` com Java 17. Os testes de integração usam o Docker do runner, pelo Testcontainers. Quando um teste falha, os relatórios ficam como artefato da execução.
 - **App** (`.github/workflows/app.yml`): `npm ci`, `typecheck`, `lint` e `npm test` com Node 24.
+- **E2E** (`.github/workflows/e2e.yml`): a suíte do Playwright contra um banco só dela (ver "Testes e2e"), quando o app ou a API mudam.
 
 Antes de abrir um PR, rode os mesmos comandos na sua máquina para não descobrir o erro só no CI.
 
@@ -128,19 +130,29 @@ Testam o app web de verdade, com cliques reais, usando o [Playwright](https://pl
 - `avaliacao.spec.ts`: avaliar, editar e excluir, permissões, volta ao local depois do login e validação do formulário.
 - `navegacao.spec.ts`: menu ☰, barra inferior, Minhas avaliações e tela de erro (pela rota `dev/erro`, que só existe em desenvolvimento).
 - `confiabilidade.spec.ts`, `review-oculta.spec.ts` e `datas.spec.ts`: selo, denúncias, fila de moderação, acesso do ADMIN e datas.
+- `excluir-conta.spec.ts`: exclusão da própria conta.
 
-Com o backend e o `npm run web` rodando:
+Rodam num **ambiente só deles**, ao lado do de desenvolvimento e sem tocar nos seus dados:
+
+| | Desenvolvimento | e2e |
+|---|---|---|
+| Banco | `accessmap-db`, porta 5432 | `accessmap-db-e2e` (profile `e2e` do `docker-compose.yml`), porta 5433, começa vazio a cada subida |
+| API | 8080 | 8090, perfil `e2e` (`application-e2e.yaml`) |
+| App web | 8081 | 8091, apontando para a API do e2e |
+
+Com o Docker rodando, um comando sobe o banco, a API e o app, roda a suíte e derruba o banco no fim:
 
 ```bash
 cd AccessMap.Front
 npx playwright install chromium   # só na primeira vez
-npm run e2e
+npm run e2e:ci                    # tudo; ou: npm run e2e:ci -- e2e/conta.spec.ts
 ```
 
-- Os prints ficam em `AccessMap.Front/e2e-results/prints/`, fora do git.
-- Os testes usam o banco de desenvolvimento: criam contas e locais novos a cada execução, e ajustam direto no banco o que não dá para criar pela tela (idade da conta e papel ADMIN). Outro banco: `E2E_DATABASE_URL`. Outra API: `E2E_API_URL`.
-- Cobrem a versão web. O `Alert` e o layout do celular se conferem no Expo Go.
-- Ainda não rodam no CI, porque precisam do backend, do app no ar e de um banco só deles (ver #128).
+- **Banco no ar:** se o banco do e2e já estiver de pé (`docker compose --profile e2e up -d --wait postgres-e2e`), o `npm run e2e` roda só o Playwright. A API e o app sobem pelo `webServer` do `playwright.config.ts`; se já estiverem nas portas 8090/8091, ele reaproveita.
+- **Prints:** ficam em `AccessMap.Front/e2e-results/prints/`, fora do git.
+- **Dados:** cada teste cria as próprias contas e locais. O que não dá para criar pela tela (idade da conta e papel ADMIN) é ajustado direto no banco do e2e. Variáveis para apontar para outro lugar: `E2E_DATABASE_URL`, `E2E_API_URL` e `E2E_APP_URL`.
+- **Plataforma:** cobrem a versão web. O `Alert` e o layout do celular se conferem no Expo Go.
+- **CI:** rodam no workflow **E2E** (`.github/workflows/e2e.yml`), com o Postgres como serviço do GitHub. O relatório, os prints e as capturas de falha ficam como artefato da execução.
 
 ### Deploy
 

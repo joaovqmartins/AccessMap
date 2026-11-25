@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import {
+  E2E_APP_URL,
   acceptNextDialog,
   adminAccount,
   clearLeftovers,
@@ -30,7 +31,7 @@ async function openQueue(page: Page) {
 }
 
 async function reportOnScreen(browser: Browser, reviewId: string, reporter: Account) {
-  const context = await browser.newContext({ baseURL: 'http://localhost:8081' });
+  const context = await browser.newContext({ baseURL: E2E_APP_URL });
   const page = await context.newPage();
   await signIn(page, reporter);
   await page.goto(`/avaliacoes/${reviewId}`);

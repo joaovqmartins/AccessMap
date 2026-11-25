@@ -1,0 +1,38 @@
+# Perfil dos testes e2e do Playwright (#128): banco próprio e porta própria, para rodar ao lado do
+# ambiente de desenvolvimento sem misturar dados. Sobe com:
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=e2e
+# O "npm run e2e" do app já sobe a API assim (webServer do playwright.config.ts).
+spring:
+  docker:
+    compose:
+      # O banco do e2e é o postgres-e2e (profile e2e do docker-compose), subido por quem roda os testes
+      enabled: false
+  datasource:
+    url: ${E2E_DB_URL:jdbc:postgresql://localhost:5433/accessmap_e2e}
+    username: postgres
+    password: e2e
+  jpa:
+    show-sql: false
+
+server:
+  port: 8090
+
+accessmap:
+  jwt:
+    # Segredo fixo só para o e2e. Nunca use em outro ambiente.
+    secret: chave-dos-testes-e2e-com-pelo-menos-32-bytes
+  cors:
+    # App web do e2e (expo start --web --port 8091)
+    allowed-origins: http://localhost:8091
+  auth:
+    rate-limit:
+      # Todos os testes saem do mesmo IP. O limite por telefone continua o normal.
+      login-per-ip: 100000
+      register-per-ip: 100000
+  review:
+    rate-limit:
+      # As regras de confiabilidade são testadas; o limite de avaliações por hora, não
+      per-hour: 1000
+      per-day: 1000
+      new-account-per-hour: 1000
+      new-account-per-day: 1000

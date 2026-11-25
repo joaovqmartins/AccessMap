@@ -19,5 +19,26 @@ services:
       timeout: 3s
       retries: 10
 
+  # Banco só dos testes e2e (#128). Fica fora do "docker compose up" normal (profile e2e) e começa
+  # vazio a cada subida (dados em memória), sem tocar no banco de desenvolvimento acima.
+  # Subir: docker compose --profile e2e up -d --wait postgres-e2e  (o "npm run e2e:ci" já faz isso)
+  postgres-e2e:
+    image: postgres:16
+    container_name: accessmap-db-e2e
+    profiles: [e2e]
+    environment:
+      POSTGRES_DB: accessmap_e2e
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: e2e
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accessmap_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
 volumes:
   pgdata:

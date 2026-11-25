@@ -1,9 +1,11 @@
 import { expect, type Page } from '@playwright/test';
 import { Client } from 'pg';
 
-const API = process.env.E2E_API_URL ?? 'http://localhost:8080';
-// Credenciais do docker-compose de desenvolvimento (README)
-const DATABASE = process.env.E2E_DATABASE_URL ?? 'postgres://postgres:accessmap123@localhost:5432/accessmap';
+// Ambiente isolado do e2e (#128): API com o perfil e2e, app web e banco postgres-e2e do docker-compose
+export const E2E_API_URL = process.env.E2E_API_URL ?? 'http://localhost:8090';
+export const E2E_APP_URL = process.env.E2E_APP_URL ?? 'http://localhost:8091';
+const API = E2E_API_URL;
+const DATABASE = process.env.E2E_DATABASE_URL ?? 'postgres://postgres:e2e@localhost:5433/accessmap_e2e';
 
 export const PASSWORD = 'e2e-senha-local';
 /** Toda avaliação criada aqui começa assim, para limpar o que sobrar de uma execução anterior. */
