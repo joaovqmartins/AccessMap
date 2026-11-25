@@ -2,6 +2,7 @@ package br.com.accessmap.backend.identity.service;
 
 import br.com.accessmap.backend.identity.dto.UserRequestDto;
 import br.com.accessmap.backend.identity.event.PasswordChangedEvent;
+import br.com.accessmap.backend.identity.event.UserDeletedEvent;
 import br.com.accessmap.backend.identity.model.User;
 import br.com.accessmap.backend.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -106,9 +107,11 @@ public class UserService {
         delete(id);
     }
 
+    /** Antes de apagar, avisa quem guarda dados da pessoa (ex.: avaliações), na mesma transação. */
     @Transactional
     public void delete(String id) {
         findById(id);
+        eventPublisher.publishEvent(new UserDeletedEvent(id));
         userRepository.deleteById(id);
     }
 

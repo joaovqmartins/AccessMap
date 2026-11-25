@@ -8,6 +8,7 @@ import br.com.accessmap.backend.review.model.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,16 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     boolean existsByUserIdAndPlaceIdAndStatus(String userId, String placeId, ReviewStatus status);
 
     Optional<Review> findByIdAndStatus(String id, ReviewStatus status);
+
+    /** Necessidades declaradas são dado sensível: saem das avaliações de quem excluiu a conta (#106). */
+    @Modifying
+    @Query(value = "DELETE FROM review_reviewer_needs WHERE review_id IN "
+            + "(SELECT id FROM reviews WHERE user_id = :userId)", nativeQuery = true)
+    void deleteReviewerNeedsOfUser(String userId);
+
+    @Modifying
+    @Query("UPDATE Review r SET r.userId = :anonymousId WHERE r.userId = :userId")
+    void reassignUser(String userId, String anonymousId);
 
     /** Fila de moderação: {@code suspicionReason} preenchido é o que coloca a review nela. */
     Page<Review> findBySuspicionReasonIsNotNullAndStatusIn(Collection<ReviewStatus> statuses, Pageable pageable);
