@@ -1,8 +1,10 @@
-import { Stack } from 'expo-router';
+import { Stack, router, type Href } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '../auth/AuthContext';
 import { colors } from '../constants/theme';
+import { takePendingRedirect } from '../utils/navigation';
 
 export default function RootLayout() {
   return (
@@ -14,6 +16,17 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status, user } = useAuth();
+
+  // Quem entrou por "Entrar para avaliar" volta para onde estava (#102). Sem destino guardado, o
+  // Stack.Protected leva para a Home sozinho. O replace espera o Stack já com as telas de quem está logado.
+  useEffect(() => {
+    if (status !== 'signedIn') return;
+    const redirect = takePendingRedirect();
+    if (redirect) {
+      const timer = setTimeout(() => router.replace(redirect as Href), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   if (status === 'loading') {
     return (

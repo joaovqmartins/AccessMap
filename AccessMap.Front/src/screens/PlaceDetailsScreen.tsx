@@ -13,6 +13,7 @@ import StarRating from '../components/StarRating';
 import TagStatsBar from '../components/TagStatsBar';
 import { ALL_TAGS } from '../constants/labels';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
+import { reviewFormPath } from '../utils/navigation';
 
 const PREVIEW_SIZE = 3;
 
@@ -114,7 +115,11 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
 
           <View style={styles.cta}>
             {!user ? (
-              <Button title="Entrar para avaliar" onPress={() => router.push('/login')} />
+              <Button
+                title="Entrar para avaliar"
+                // Depois de entrar (ou se cadastrar), abre direto o formulário deste local (#102)
+                onPress={() => router.push({ pathname: '/login', params: { redirect: reviewFormPath(placeId, name) } })}
+              />
             ) : myReview ? (
               <Button
                 title="Ver minha avaliação"

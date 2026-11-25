@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
+import { safeRedirect, setPendingRedirect } from '../utils/navigation';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
 
 const LOGO = require('../../assets/images/logo.png');
@@ -18,6 +19,8 @@ const LOGO_SIZE = { width: 200, height: Math.round((200 * 549) / 720) };
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  // Para onde voltar depois de entrar, quando veio de "Entrar para avaliar"/"denunciar" (#102)
+  const redirect = safeRedirect(useLocalSearchParams<{ redirect?: string }>().redirect);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
@@ -34,9 +37,11 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
+      setPendingRedirect(redirect);
       await signIn({ phone, password });
-      // O guard do _layout troca para a Home quando o status vira 'signedIn'
+      // O guard do _layout troca para a Home (ou para o redirect) quando o status vira 'signedIn'
     } catch (e) {
+      setPendingRedirect(null);
       setFormError(
         e instanceof ApiError && e.status === 401
           ? 'Telefone ou senha incorretos'
@@ -87,7 +92,11 @@ export default function LoginScreen() {
 
           <Button title="Entrar" onPress={handleSubmit} loading={submitting} />
 
-          <Link href="/cadastro" style={styles.link} accessibilityRole="link">
+          <Link
+            href={redirect ? { pathname: '/cadastro', params: { redirect } } : '/cadastro'}
+            style={styles.link}
+            accessibilityRole="link"
+          >
             Não tem conta? Cadastre-se
           </Link>
         </ScrollView>

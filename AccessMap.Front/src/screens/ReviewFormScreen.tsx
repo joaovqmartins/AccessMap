@@ -13,6 +13,7 @@ import TagAssessmentPicker from '../components/TagAssessmentPicker';
 import TextField from '../components/TextField';
 import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
+import { goBackOr } from '../utils/navigation';
 
 type Props =
   | { mode: 'create'; placeId: string; placeName?: string }
@@ -28,7 +29,8 @@ export default function ReviewFormScreen(props: Props) {
   const [tags, setTags] = useState<ReviewTags>({});
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(props.mode === 'edit');
+  // Na criação também carrega: antes de mostrar o formulário, confere se a pessoa já avaliou o local
+  const [loading, setLoading] = useState(props.mode === 'edit' || !!user);
   const [submitting, setSubmitting] = useState(false);
 
   const reviewId = props.mode === 'edit' ? props.reviewId : null;
@@ -38,6 +40,28 @@ export default function ReviewFormScreen(props: Props) {
   useEffect(() => {
     if (formError) scrollRef.current?.scrollTo({ y: 0, animated: true });
   }, [formError]);
+
+  // Criação: quem já avaliou o local vai direto para a avaliação dele, sem preencher tudo para receber um 409
+  const createPlaceId = props.mode === 'create' ? props.placeId : null;
+  useEffect(() => {
+    if (!createPlaceId || !user) return;
+    let cancelled = false;
+    reviewsApi
+      .findMine(createPlaceId, user.id)
+      .then((mine) => {
+        if (cancelled) return;
+        if (mine) {
+          router.replace({ pathname: '/avaliacoes/[id]', params: { id: mine.id, jaAvaliado: '1' } });
+        } else {
+          setLoading(false);
+        }
+      })
+      // Sem conseguir conferir, mostra o formulário: o 409 no envio continua protegendo
+      .catch(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [createPlaceId, user]);
 
   // Edição: preenche o formulário com a avaliação atual
   useEffect(() => {
@@ -85,18 +109,18 @@ export default function ReviewFormScreen(props: Props) {
           comment: comment.trim() || undefined,
           tags,
         });
-        router.back();
+        goBackOr({ pathname: '/locais/[placeId]', params: { placeId: props.placeId, name: props.placeName } });
       } else if (original) {
         const changes = diff(original, { rating, comment: comment.trim(), tags });
         if (Object.keys(changes).length) await reviewsApi.update(original.id, changes);
-        router.back();
+        goBackOr({ pathname: '/avaliacoes/[id]', params: { id: original.id } });
       }
     } catch (e) {
       if (props.mode === 'create' && e instanceof ApiError && e.status === 409 && user) {
         // Já existe avaliação deste usuário para o local: leva direto até ela
         const mine = await reviewsApi.findMine(props.placeId, user.id).catch(() => null);
         if (mine) {
-          router.replace({ pathname: '/avaliacoes/[id]', params: { id: mine.id } });
+          router.replace({ pathname: '/avaliacoes/[id]', params: { id: mine.id, jaAvaliado: '1' } });
           return;
         }
       }
