@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { reviewsApi } from '../api/reviews';
@@ -32,7 +32,7 @@ export default function ReviewFormScreen(props: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const reviewId = props.mode === 'edit' ? props.reviewId : null;
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
 
   // O botão de enviar fica no fim do formulário e o erro, no topo: sem rolar, a pessoa não vê o aviso
   useEffect(() => {

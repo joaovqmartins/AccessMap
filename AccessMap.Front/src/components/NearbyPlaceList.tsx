@@ -99,10 +99,10 @@ export default function NearbyPlaceList({
       }
       // Com filtro e nenhum local atendendo, quem avisa é o rodapé da seção, não esta mensagem
       ListEmptyComponent={
-        total === 0 ? <Text style={styles.notice}>Nenhum local desta categoria até {RADIUS} de você.</Text> : null
+        total === 0 ? <Text style={styles.notice}>Nenhum local desta categoria até {RADIUS} de você.</Text> : undefined
       }
       // Atribuição exigida pelo Google quando os dados dele aparecem sem o mapa dele
-      ListFooterComponent={total > 0 ? <Text style={styles.attribution}>Google Maps</Text> : null}
+      ListFooterComponent={total > 0 ? <Text style={styles.attribution}>Google Maps</Text> : undefined}
     />
   );
 }

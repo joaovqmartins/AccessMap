@@ -84,10 +84,10 @@ export default function ReviewListScreen({ placeId }: { placeId: string }) {
             <ErrorMessage message={error} />
             <Button title="Tentar novamente" variant="secondary" onPress={() => loadPage(reviews.length ? page + 1 : 0)} />
           </View>
-        ) : null
+        ) : undefined
       }
-      ListEmptyComponent={!error ? <Text style={styles.empty}>Nenhuma avaliação ainda.</Text> : null}
-      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null}
+      ListEmptyComponent={!error ? <Text style={styles.empty}>Nenhuma avaliação ainda.</Text> : undefined}
+      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : undefined}
     />
   );
 }
