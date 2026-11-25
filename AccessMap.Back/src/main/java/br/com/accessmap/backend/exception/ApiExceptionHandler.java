@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,6 +85,15 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(Map.of(
                 "status", ex.getStatusCode().value(),
                 "mensagem", message
+        ));
+    }
+
+    // Rota inexistente para quem está logado: 404, e não 500 com stack trace no log
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "status", 404,
+                "mensagem", "Recurso não encontrado"
         ));
     }
 
