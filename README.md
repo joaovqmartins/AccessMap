@@ -10,7 +10,7 @@ O objetivo é fornecer informações reais e atualizadas sobre a acessibilidade 
 
 ## 🚀 Funcionalidades Principais
 * **Mapeamento Colaborativo:** Reporte de barreiras (ex: calçadas danificadas, ausência de rampas) e pontos de acessibilidade, com anexo de fotos e localização exata.
-* **Validação Comunitária:** Sistema de confirmação coletiva para garantir a confiabilidade das informações.
+* **Confiabilidade das avaliações:** a nota de cada local é uma média ponderada pelo nível de confiança de quem avaliou (conta nova, regular, confiável ou restrita), com limites de frequência, denúncias da comunidade e uma fila de moderação para o ADMIN. As regras, os valores e um exemplo numérico estão em [docs/confiabilidade.md](docs/confiabilidade.md).
 * **Filtros Personalizados:** Filtragem de resultados por tipo de necessidade (mobilidade reduzida, deficiência visual, auditiva, etc.).
 * **Rotas Acessíveis:** Traçado de rotas entre pontos considerando estritamente caminhos adaptados.
 
