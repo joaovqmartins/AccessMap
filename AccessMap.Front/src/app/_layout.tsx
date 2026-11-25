@@ -3,8 +3,12 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '../auth/AuthContext';
+import ErrorScreen from '../components/ErrorScreen';
 import { colors } from '../constants/theme';
 import { takePendingRedirect } from '../utils/navigation';
+
+// Qualquer tela que quebre ao renderizar cai aqui, em vez de tela branca (#133)
+export { ErrorScreen as ErrorBoundary };
 
 export default function RootLayout() {
   return (
@@ -40,7 +44,8 @@ function RootNavigator() {
   return (
     <Stack>
       <Stack.Protected guard={signedIn}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        {/* O título não aparece (sem cabeçalho), mas é o que o "voltar" das outras telas anuncia */}
+        <Stack.Screen name="index" options={{ headerShown: false, title: 'Início' }} />
         <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
         <Stack.Screen name="minhas-avaliacoes" options={{ title: 'Minhas avaliações' }} />
         <Stack.Screen name="locais/[placeId]/avaliar" options={{ title: 'Avaliar local' }} />
@@ -58,6 +63,8 @@ function RootNavigator() {
       <Stack.Screen name="locais/[placeId]/index" options={{ title: 'Local' }} />
       <Stack.Screen name="locais/[placeId]/avaliacoes" options={{ title: 'Avaliações' }} />
       <Stack.Screen name="avaliacoes/[id]/index" options={{ title: 'Avaliação' }} />
+      {/* Só em desenvolvimento: força um erro para o e2e conferir a tela de erro */}
+      <Stack.Screen name="dev/erro" options={{ title: 'Teste de erro' }} />
     </Stack>
   );
 }

@@ -277,18 +277,26 @@ function LocationNotice({ location, onRequest }: { location: LocationState; onRe
     case 'denied':
       return (
         <View style={styles.noticeBox}>
-          <Text style={styles.notice}>Sem a localização não dá para mostrar locais por perto. {fallback}</Text>
-          {location.canAskAgain ? (
+          <Text style={styles.notice} accessibilityLiveRegion="polite">
+            Sem a localização não dá para mostrar locais por perto. {fallback}
+          </Text>
+          {Platform.OS === 'web' && (
+            // No navegador, depois de negar, o pedido não aparece de novo: o botão sozinho não fazia nada visível
+            <Text style={styles.notice}>
+              Para liberar, clique no cadeado ao lado do endereço do site, permita a localização e tente de novo.
+            </Text>
+          )}
+          {Platform.OS === 'web' ? (
+            <Button title="Tentar de novo" variant="secondary" onPress={onRequest} />
+          ) : location.canAskAgain ? (
             <Button title="Permitir localização" variant="secondary" onPress={onRequest} />
           ) : (
-            Platform.OS !== 'web' && (
-              <Button
-                title="Abrir configurações"
-                variant="secondary"
-                onPress={() => Linking.openSettings()}
-                accessibilityHint="Abre as configurações do aparelho para liberar a localização"
-              />
-            )
+            <Button
+              title="Abrir configurações"
+              variant="secondary"
+              onPress={() => Linking.openSettings()}
+              accessibilityHint="Abre as configurações do aparelho para liberar a localização"
+            />
           )}
         </View>
       );
