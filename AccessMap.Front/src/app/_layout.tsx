@@ -10,6 +10,18 @@ import { takePendingRedirect } from '../utils/navigation';
 // Qualquer tela que quebre ao renderizar cai aqui, em vez de tela branca (#133)
 export { ErrorScreen as ErrorBoundary };
 
+// No iOS 26 o cabeçalho nativo é "Liquid Glass" e fica transparente quando não tem cor de fundo:
+// o conteúdo começava por baixo dele (nome e telefone escondidos no perfil). Com fundo opaco ele
+// volta a ocupar o próprio espaço, em todas as telas e plataformas.
+const HEADER_OPTIONS = {
+  headerTransparent: false,
+  headerStyle: { backgroundColor: colors.surface },
+  headerShadowVisible: true,
+  headerTintColor: colors.primary,
+  headerTitleStyle: { color: colors.text, fontWeight: '600' as const },
+  contentStyle: { backgroundColor: colors.background },
+};
+
 export default function RootLayout() {
   return (
     <AuthProvider>
@@ -42,7 +54,7 @@ function RootNavigator() {
 
   const signedIn = status === 'signedIn';
   return (
-    <Stack>
+    <Stack screenOptions={HEADER_OPTIONS}>
       <Stack.Protected guard={signedIn}>
         {/* O título não aparece (sem cabeçalho), mas é o que o "voltar" das outras telas anuncia */}
         <Stack.Screen name="index" options={{ headerShown: false, title: 'Início' }} />
