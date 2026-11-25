@@ -2,6 +2,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -53,7 +54,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, styles.safeLogin]}>
+      {/* Sem cabeçalho marinho aqui: relógio e bateria escuros sobre o fundo claro */}
+      <StatusBar style="dark" />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* Decorativa: o título logo abaixo já diz o nome para o leitor de tela */}
@@ -64,7 +67,10 @@ export default function LoginScreen() {
             accessible={false}
             importantForAccessibility="no"
           />
-          <Text style={styles.title} accessibilityRole="header">AccessMap</Text>
+          {/* Nome em duas cores, como na logo; o leitor de tela ouve uma palavra só */}
+          <Text style={styles.title} accessibilityRole="header" accessibilityLabel="AccessMap">
+            Access<Text style={styles.titleAccent}>Map</Text>
+          </Text>
           <Text style={styles.subtitle}>Entre com seu telefone e senha</Text>
 
           <ErrorMessage message={formError} />
@@ -115,10 +121,13 @@ export default function LoginScreen() {
 
 export const authStyles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  // O login não tem cabeçalho: o azul-claro do fundo da logo dá a cara do app logo na entrada
+  safeLogin: { backgroundColor: colors.infoBackground },
   flex: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   logo: { alignSelf: 'center', marginBottom: spacing.md },
-  title: { fontSize: 32, fontWeight: 'bold', color: colors.primary, textAlign: 'center' },
+  title: { fontSize: 32, fontWeight: 'bold', color: colors.brand, textAlign: 'center' },
+  titleAccent: { color: colors.accent },
   subtitle: { fontSize: 16, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.lg },
   link: {
     marginTop: spacing.md,

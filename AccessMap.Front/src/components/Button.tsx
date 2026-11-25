@@ -5,7 +5,8 @@ import { MIN_TOUCH, colors, spacing } from '../constants/theme';
 type Props = {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger';
+  /** `accent`: coral do pin da logo, para a ação principal da tela ("Avaliar este local"). */
+  variant?: 'primary' | 'secondary' | 'danger' | 'accent';
   loading?: boolean;
   disabled?: boolean;
   accessibilityHint?: string;
@@ -39,7 +40,7 @@ export default function Button({ title, onPress, variant = 'primary', loading, d
 const styles = StyleSheet.create({
   base: {
     minHeight: MIN_TOUCH,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
     alignItems: 'center',
@@ -48,6 +49,7 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.primary },
   secondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
   danger: { backgroundColor: colors.danger },
+  accent: { backgroundColor: colors.accent },
   dimmed: { opacity: 0.6 },
   text: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
   textSecondary: { color: colors.primary },

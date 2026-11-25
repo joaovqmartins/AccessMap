@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Linking, Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { router, useFocusEffect } from 'expo-router';
 
@@ -15,7 +15,7 @@ import PlaceSearch from '../components/PlaceSearch';
 import PlacesMap from '../components/PlacesMap';
 import { ALL_NEARBY, PLACE_CATEGORIES, type PlaceCategory } from '../constants/categories';
 import { TAG_LABELS } from '../constants/labels';
-import { MIN_TOUCH, colors, spacing } from '../constants/theme';
+import { MIN_TOUCH, categoryColor, colors, spacing } from '../constants/theme';
 import { NO_FILTERS, hasFilters, useNearbyPlaces, type AccessibilityFilters } from '../hooks/useNearbyPlaces';
 import { useUserLocation, type LocationState } from '../hooks/useUserLocation';
 
@@ -47,6 +47,8 @@ function BottomTab({ label, selected, onPress, accessibilityLabel }: {
       accessibilityState={{ selected }}
       accessibilityLabel={accessibilityLabel ?? label}
     >
+      {/* Traço em cima da aba ativa: o estado não depende só da cor do texto */}
+      <View style={[styles.navIndicator, selected && styles.navIndicatorActive]} />
       <Text style={[styles.navText, selected && styles.navTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -66,6 +68,8 @@ function describeFilters({ tags, useMyNeeds }: AccessibilityFilters) {
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  // A área segura de baixo fica com a barra de abas (branca), não com o marinho do topo
+  const insets = useSafeAreaInsets();
   const { state: location, request: requestLocation } = useUserLocation();
   const [category, setCategory] = useState<PlaceCategory>(ALL_NEARBY);
   // "Minhas necessidades" começa desligado: com poucas avaliações, a lista viria quase vazia sem o usuário entender
@@ -89,7 +93,8 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    // O topo da área segura fica marinho como o cabeçalho; o resto da tela, no fundo claro
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       
       {/* 1. CABEÇALHO: Menu, Foto do Utilizador e Busca */}
       <View style={styles.header}>
@@ -124,12 +129,14 @@ export default function HomeScreen() {
       {/* 2. CATEGORIAS DE ESTABELECIMENTO */}
       <View style={styles.optionsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionsContent}>
-          {PLACE_CATEGORIES.map((c) => {
+          {PLACE_CATEGORIES.map((c, i) => {
             const selected = c.key === category.key;
+            // Cada categoria com uma cor da logo: suave quando solta, cheia quando escolhida
+            const tone = categoryColor(i);
             return (
               <TouchableOpacity
                 key={c.key}
-                style={[styles.optionPill, selected && styles.optionPillSelected]}
+                style={[styles.optionPill, { backgroundColor: selected ? tone.solid : tone.soft }]}
                 onPress={() => setCategory(c)}
                 accessibilityRole="button"
                 aria-pressed={selected}
@@ -228,7 +235,7 @@ export default function HomeScreen() {
       {menuOpen && <MainMenu onClose={() => setMenuOpen(false)} />}
 
       {/* 4. BARRA DE NAVEGAÇÃO INFERIOR */}
-      <View style={styles.bottomNavigation} accessibilityRole="tablist">
+      <View style={[styles.bottomNavigation, { paddingBottom: spacing.xs + insets.bottom }]} accessibilityRole="tablist">
         <BottomTab
           label="Home"
           selected={category.key === ALL_NEARBY.key}
@@ -317,15 +324,13 @@ function LocationNotice({ location, onRequest }: { location: LocationState; onRe
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.brand,
   },
   
   // --- Estilos do Cabeçalho ---
   header: {
     padding: 16,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: colors.brand,
   },
   topRow: {
     flexDirection: 'row',
@@ -341,13 +346,16 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 24,
-    color: colors.text,
+    color: colors.onBrand,
   },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
+    // Anel branco: o coral se destaca no marinho
+    borderWidth: 2,
+    borderColor: colors.onBrand,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -361,6 +369,10 @@ const styles = StyleSheet.create({
   optionsContainer: {
     paddingVertical: 12,
     backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   optionsContent: {
     paddingRight: 16,
@@ -368,7 +380,6 @@ const styles = StyleSheet.create({
   optionPill: {
     minHeight: MIN_TOUCH,
     justifyContent: 'center',
-    backgroundColor: colors.border,
     paddingHorizontal: 16,
     borderRadius: MIN_TOUCH / 2,
     marginLeft: 16,
@@ -398,7 +409,7 @@ const styles = StyleSheet.create({
   },
   segmented: {
     flexDirection: 'row',
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -421,7 +432,7 @@ const styles = StyleSheet.create({
   toolButton: {
     minHeight: MIN_TOUCH,
     justifyContent: 'center',
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
@@ -429,6 +440,7 @@ const styles = StyleSheet.create({
   // --- Estilos dos Resultados ---
   results: {
     flex: 1, // O flex: 1 faz esta área expandir e ocupar todo o espaço restante
+    backgroundColor: colors.background,
   },
   noticeBox: {
     flex: 1,
@@ -464,6 +476,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   navTextActive: {
-    color: colors.primary, // Destaca a rota atual
+    color: colors.accent, // Destaca a rota atual, no coral do pin da logo
+    fontWeight: '800',
+  },
+  navIndicator: {
+    width: 28,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: spacing.xs,
+  },
+  navIndicatorActive: {
+    backgroundColor: colors.accent,
   },
 });

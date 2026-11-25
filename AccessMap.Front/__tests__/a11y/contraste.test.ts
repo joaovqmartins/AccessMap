@@ -1,4 +1,4 @@
-import { assessmentColors, colors } from '../../src/constants/theme';
+import { assessmentColors, categoryColors, colors } from '../../src/constants/theme';
 
 // Contraste WCAG 2.1 de cada par de cores que o app usa (#56).
 // Texto pede 4,5:1 (AA); borda de campo e ícone que identifica algo pede 3:1 (1.4.11).
@@ -48,11 +48,38 @@ const pairs: [string, string, string, number][] = [
   ['borda dos campos nos cards', colors.inputBorder, colors.surface, UI],
   ['borda do campo de busca no cabeçalho', colors.inputBorder, colors.surface, UI],
   ['borda dos campos no fundo da tela', colors.inputBorder, colors.background, UI],
+  // Paleta da logo
+  ['títulos e cabeçalhos no marinho', colors.onBrand, colors.brand, TEXT],
+  ['estrela sobre o marinho', colors.star, colors.brand, UI],
+  ['texto do botão coral e do avatar', colors.onPrimary, colors.accent, TEXT],
+  ['coral nos cards', colors.accent, colors.surface, TEXT],
+  ['coral no fundo da tela', colors.accent, colors.background, TEXT],
+  ['coral no fundo coral suave', colors.accent, colors.accentSoft, TEXT],
+  ['texto no fundo coral suave', colors.text, colors.accentSoft, TEXT],
+  ['texto no fundo verde suave', colors.text, colors.successBackground, TEXT],
+  ['texto no fundo azul suave', colors.text, colors.infoBackground, TEXT],
+  ['texto no selo amarelo da nota', colors.text, colors.warningBackground, TEXT],
+  ['texto secundário no fundo coral suave', colors.textMuted, colors.accentSoft, TEXT],
+  ['texto secundário no fundo verde suave', colors.textMuted, colors.successBackground, TEXT],
+  ['texto secundário no fundo amarelo suave', colors.textMuted, colors.warningBackground, TEXT],
+  ['título no fundo azul suave do login', colors.brand, colors.infoBackground, TEXT],
+  ['coral vivo decorativo no branco', colors.accentBright, colors.surface, UI],
 ];
+
+// Cada categoria da Home: texto branco na cor cheia (escolhida) e texto escuro e cor cheia no fundo suave
+const categoryPairs: [string, string, string][] = categoryColors.flatMap(({ solid, soft }) => [
+  [`branco sobre ${solid}`, colors.onPrimary, solid],
+  [`texto sobre ${soft}`, colors.text, soft],
+  [`${solid} sobre ${soft}`, solid, soft],
+] as [string, string, string][]);
 
 describe('contraste das cores do tema (WCAG AA)', () => {
   it.each(pairs)('%s', (_label, foreground, background, minimum) => {
     expect(contrast(foreground, background)).toBeGreaterThanOrEqual(minimum);
+  });
+
+  it.each(categoryPairs)('categoria: %s', (_label, foreground, background) => {
+    expect(contrast(foreground, background)).toBeGreaterThanOrEqual(TEXT);
   });
 
   it('a conta de contraste bate com os valores de referência do WCAG', () => {

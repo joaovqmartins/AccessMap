@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minHeight: MIN_TOUCH,
-    backgroundColor: colors.surfaceMuted,
-    // Sem borda, o cinza claro do campo some no cabeçalho branco (1,1:1); a borda marca onde digitar
+    // Branco sobre o cabeçalho marinho da Home (12,3:1); a borda marca onde digitar nos fundos claros
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.inputBorder,
     borderRadius: 8,

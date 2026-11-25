@@ -1,4 +1,5 @@
 import { Stack, router, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -12,19 +13,21 @@ export { ErrorScreen as ErrorBoundary };
 
 // No iOS 26 o cabeçalho nativo é "Liquid Glass" e fica transparente quando não tem cor de fundo:
 // o conteúdo começava por baixo dele (nome e telefone escondidos no perfil). Com fundo opaco ele
-// volta a ocupar o próprio espaço, em todas as telas e plataformas.
+// volta a ocupar o próprio espaço, em todas as telas e plataformas. O marinho é o contorno da logo.
 const HEADER_OPTIONS = {
   headerTransparent: false,
-  headerStyle: { backgroundColor: colors.surface },
-  headerShadowVisible: true,
-  headerTintColor: colors.primary,
-  headerTitleStyle: { color: colors.text, fontWeight: '600' as const },
+  headerStyle: { backgroundColor: colors.brand },
+  headerShadowVisible: false,
+  headerTintColor: colors.onBrand,
+  headerTitleStyle: { color: colors.onBrand, fontWeight: '700' as const },
   contentStyle: { backgroundColor: colors.background },
 };
 
 export default function RootLayout() {
   return (
     <AuthProvider>
+      {/* Relógio e bateria claros sobre os cabeçalhos marinhos; o login, sem cabeçalho, volta para o escuro */}
+      <StatusBar style="light" />
       <RootNavigator />
     </AuthProvider>
   );

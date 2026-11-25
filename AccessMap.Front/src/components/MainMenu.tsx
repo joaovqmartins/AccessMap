@@ -10,7 +10,7 @@ type Props = {
   onClose: () => void;
 };
 
-type Item = { label: string; href: Href };
+type Item = { label: string; href: Href; dot: string };
 
 /** Menu do ☰ da Home: painel à esquerda sobre um fundo escurecido que fecha ao tocar. */
 export default function MainMenu({ onClose }: Props) {
@@ -20,9 +20,9 @@ export default function MainMenu({ onClose }: Props) {
   const insets = useSafeAreaInsets();
 
   const items: Item[] = [
-    { label: 'Meu perfil', href: '/perfil' },
-    { label: 'Minhas avaliações', href: '/minhas-avaliacoes' },
-    ...(user?.role === 'ADMIN' ? [{ label: 'Moderação', href: '/moderacao' as Href }] : []),
+    { label: 'Meu perfil', href: '/perfil', dot: colors.accentBright },
+    { label: 'Minhas avaliações', href: '/minhas-avaliacoes', dot: colors.success },
+    ...(user?.role === 'ADMIN' ? [{ label: 'Moderação', href: '/moderacao' as Href, dot: colors.star }] : []),
   ];
 
   function go(href: Href) {
@@ -41,13 +41,19 @@ export default function MainMenu({ onClose }: Props) {
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View
-          style={[styles.panel, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: spacing.md + insets.left }]}
+          style={[styles.panel, { paddingBottom: insets.bottom, paddingLeft: spacing.md + insets.left }]}
           // Caixa de diálogo modal com nome: sem o papel, o aria-modal da web fica inválido (axe)
           role="dialog"
           aria-label="Menu"
           accessibilityViewIsModal
         >
-          <View style={styles.header}>
+          {/* Topo marinho, como os cabeçalhos do app, cobrindo também a área do relógio */}
+          <View
+            style={[
+              styles.header,
+              { paddingTop: insets.top + spacing.md, marginLeft: -(spacing.md + insets.left), paddingLeft: spacing.md + insets.left },
+            ]}
+          >
             <View style={styles.headerText}>
               <Text style={styles.title} accessibilityRole="header">Menu</Text>
               {!!user?.name && <Text style={styles.subtitle} numberOfLines={1}>{user.name}</Text>}
@@ -63,12 +69,12 @@ export default function MainMenu({ onClose }: Props) {
             </Pressable>
           </View>
 
-          <MenuItem label="Início" onPress={onClose} />
+          <MenuItem label="Início" dot={colors.primary} onPress={onClose} />
           {items.map((item) => (
-            <MenuItem key={item.label} label={item.label} onPress={() => go(item.href)} />
+            <MenuItem key={item.label} label={item.label} dot={item.dot} onPress={() => go(item.href)} />
           ))}
           <View style={styles.separator} />
-          <MenuItem label="Sair da conta" onPress={handleSignOut} danger />
+          <MenuItem label="Sair da conta" dot={colors.danger} onPress={handleSignOut} danger />
         </View>
 
         {/* Fundo: tocar fora do painel fecha o menu */}
@@ -83,7 +89,7 @@ export default function MainMenu({ onClose }: Props) {
   );
 }
 
-function MenuItem({ label, onPress, danger }: { label: string; onPress: () => void; danger?: boolean }) {
+function MenuItem({ label, onPress, danger, dot }: { label: string; onPress: () => void; danger?: boolean; dot?: string }) {
   return (
     <Pressable
       onPress={onPress}
@@ -91,6 +97,8 @@ function MenuItem({ label, onPress, danger }: { label: string; onPress: () => vo
       accessibilityLabel={label}
       style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
     >
+      {/* Bolinha decorativa nas cores da logo: o nome do item já diz tudo ao leitor de tela */}
+      {!!dot && <View style={[styles.dot, { backgroundColor: dot }]} accessible={false} importantForAccessibility="no" />}
       <Text style={[styles.itemText, danger && styles.itemDanger]}>{label}</Text>
     </Pressable>
   );
@@ -108,18 +116,27 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingBottom: spacing.md,
+    paddingRight: spacing.sm,
+    marginRight: -spacing.md,
+    backgroundColor: colors.brand,
     marginBottom: spacing.sm,
   },
   headerText: { flex: 1 },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
+  title: { fontSize: 20, fontWeight: '700', color: colors.onBrand },
+  subtitle: { fontSize: 14, color: colors.onBrand, marginTop: 2 },
   close: { minWidth: MIN_TOUCH, minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 20, color: colors.text },
-  item: { minHeight: MIN_TOUCH + 4, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: 8 },
-  itemPressed: { backgroundColor: colors.background },
+  closeText: { fontSize: 20, color: colors.onBrand },
+  item: {
+    minHeight: MIN_TOUCH + 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 8,
+  },
+  itemPressed: { backgroundColor: colors.infoBackground },
+  dot: { width: 12, height: 12, borderRadius: 6 },
   itemText: { fontSize: 17, color: colors.text },
   itemDanger: { color: colors.danger, fontWeight: '600' },
   separator: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },

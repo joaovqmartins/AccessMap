@@ -65,19 +65,27 @@ export default function ReviewCard({ review, isMine, showPlace, onPress }: Props
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  mine: { borderColor: colors.primary, borderWidth: 2 },
+  // A sua avaliação ganha o coral do pin da logo
+  mine: { borderColor: colors.accent, borderWidth: 2, backgroundColor: colors.surface },
   pressed: { opacity: 0.7 },
   place: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   author: { fontSize: 13, color: colors.textMuted },
   badge: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: spacing.xs },
-  badgeTrusted: { color: colors.success },
+  badgeTrusted: {
+    color: colors.success,
+    backgroundColor: colors.successBackground,
+    alignSelf: 'flex-start',
+    borderRadius: 10,
+    paddingHorizontal: spacing.sm,
+    overflow: 'hidden',
+  },
   comment: { fontSize: 15, color: colors.text, marginTop: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm },
   chip: {
