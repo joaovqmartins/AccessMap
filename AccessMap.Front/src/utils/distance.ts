@@ -15,6 +15,8 @@ export function distanceInMeters(a: Point, b: Point) {
 export function formatDistance(meters: number) {
   // O Google devolve o mesmo ponto para vários locais de um endereço: "0 m" soaria como erro
   if (meters < 10) return 'menos de 10 m';
-  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
+  // Arredonda antes de comparar: 995 m daria "1000 m" em vez de "1,0 km"
+  const rounded = Math.round(meters / 10) * 10;
+  if (rounded < 1000) return `${rounded} m`;
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
 }

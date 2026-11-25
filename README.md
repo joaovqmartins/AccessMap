@@ -92,6 +92,22 @@ npx expo-doctor     # versões compatíveis com o SDK
 
 As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
 
+### Testes unitários do app
+
+Jest com o preset `jest-expo` e a [React Native Testing Library](https://callstack.github.io/react-native-testing-library/). Não precisam do backend nem do app no ar.
+
+```bash
+cd AccessMap.Front
+npm test                     # roda todos
+npm test -- --coverage       # com o relatório de cobertura em coverage/
+```
+
+- Ficam em `AccessMap.Front/__tests__/`, espelhando o `src/` (`utils`, `api`, `components`, `screens`, `hooks`), com o nome `*.test.ts(x)`.
+- **API:** as chamadas são testadas com o `fetch` mockado.
+- **Mocks em todos os testes** (`jest.setup.ts`): o `expo-secure-store` vira um mapa em memória e o `react-native-safe-area-context` usa o mock oficial dele.
+- **Mocks por teste:** o `expo-router` e o `useAuth` são mockados em cada arquivo que precisa deles.
+- **RNTL 14:** `render`, `fireEvent` e `renderHook` são assíncronos, então use sempre `await`.
+
 ### Testes e2e
 
 Testam o app web de verdade, com cliques reais, usando o [Playwright](https://playwright.dev). Um arquivo por fluxo em `AccessMap.Front/e2e/`:
