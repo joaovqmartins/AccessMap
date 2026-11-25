@@ -94,7 +94,12 @@ As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/ty
 
 ### Testes e2e
 
-Testam o app web de verdade, com cliques reais, usando o [Playwright](https://playwright.dev). Cobrem o fluxo de confiabilidade: selo, denúncias, fila de moderação e acesso do ADMIN.
+Testam o app web de verdade, com cliques reais, usando o [Playwright](https://playwright.dev). Um arquivo por fluxo em `AccessMap.Front/e2e/`:
+
+- `conta.spec.ts`: cadastro, login com senha errada, sair e entrar, troca de senha.
+- `avaliacao.spec.ts`: avaliar, editar e excluir, permissões, volta ao local depois do login e validação do formulário.
+- `navegacao.spec.ts`: menu ☰, barra inferior, Minhas avaliações e tela de erro (pela rota `dev/erro`, que só existe em desenvolvimento).
+- `confiabilidade.spec.ts`, `review-oculta.spec.ts` e `datas.spec.ts`: selo, denúncias, fila de moderação, acesso do ADMIN e datas.
 
 Com o backend e o `npm run web` rodando:
 
