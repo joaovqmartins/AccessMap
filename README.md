@@ -1,5 +1,8 @@
 # ♿ AccessMap
 
+[![Backend](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/backend.yml)
+[![App](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml/badge.svg)](https://github.com/joaovqmartins/AccessMap/actions/workflows/app.yml)
+
 O AccessMap é um aplicativo mobile que permite à comunidade mapear colaborativamente pontos de acessibilidade e barreiras urbanas. 
 
 O objetivo é fornecer informações reais e atualizadas sobre a acessibilidade dos espaços urbanos, garantindo maior autonomia para pessoas com deficiência ou mobilidade reduzida, além de gerar dados abertos para o embasamento de políticas públicas de inclusão.
@@ -90,7 +93,16 @@ npm run lint        # ESLint (eslint-config-expo)
 npx expo-doctor     # versões compatíveis com o SDK
 ```
 
-As rotas são tipadas (`typedRoutes` no `app.json`): os tipos ficam em `.expo/types/`, que não vai para o git e só é gerado pelo `npx expo start`. Num clone novo, ou depois de criar uma rota, rode o `expo start` uma vez antes do `typecheck`; senão o `tsc` acusa erro em todo `Link`/`router.push`.
+As rotas são tipadas (`typedRoutes` no `app.json`). O `npx expo start` gera os tipos em `.expo/types/`, que não vai para o git. Com o expo-router 58 o `typecheck` passa sem eles, então um clone novo não precisa rodar o `expo start` antes. Mesmo assim, os tipos gerados deixam o editor completar os caminhos de `Link` e `router.push`.
+
+### CI (GitHub Actions)
+
+Todo PR e todo push na `main` rodam dois workflows, cada um só quando a pasta dele muda:
+
+- **Backend** (`.github/workflows/backend.yml`): `./mvnw test` com Java 17. Os testes de integração usam o Docker do runner, pelo Testcontainers. Quando um teste falha, os relatórios ficam como artefato da execução.
+- **App** (`.github/workflows/app.yml`): `npm ci`, `typecheck`, `lint` e `npm test` com Node 24.
+
+Antes de abrir um PR, rode os mesmos comandos na sua máquina para não descobrir o erro só no CI.
 
 ### Testes unitários do app
 
@@ -128,7 +140,7 @@ npm run e2e
 - Os prints ficam em `AccessMap.Front/e2e-results/prints/`, fora do git.
 - Os testes usam o banco de desenvolvimento: criam contas e locais novos a cada execução, e ajustam direto no banco o que não dá para criar pela tela (idade da conta e papel ADMIN). Outro banco: `E2E_DATABASE_URL`. Outra API: `E2E_API_URL`.
 - Cobrem a versão web. O `Alert` e o layout do celular se conferem no Expo Go.
-- Ainda não rodam no CI, porque precisam do backend e do app no ar (ver #103).
+- Ainda não rodam no CI, porque precisam do backend, do app no ar e de um banco só deles (ver #128).
 
 ### Deploy
 
