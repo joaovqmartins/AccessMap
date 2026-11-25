@@ -77,7 +77,8 @@ npm start       # QR code para o Expo Go; "a" abre no emulador Android
 npm run web     # navegador em http://localhost:8081
 ```
 
-- O `EXPO_PUBLIC_API_URL` do `AccessMap.Front/.env.local` muda conforme onde o app roda; os valores estão explicados no arquivo. O Expo só lê esse arquivo ao iniciar.
+- O app descobre sozinho o endereço da API (`src/api/baseUrl.ts`): no navegador usa o host da página, e no Expo Go usa o IP do computador que roda o Metro, sempre na porta 8080. O `EXPO_PUBLIC_API_URL` do `.env.local` é opcional e só serve para apontar para outro servidor. O Expo só lê esse arquivo ao iniciar.
+- Toda requisição à API desiste em 15 s e mostra "Não foi possível conectar ao servidor".
 - No celular e no emulador, o refresh token fica no armazenamento seguro do aparelho (`expo-secure-store`). No navegador ele fica no `sessionStorage` (`tokenStorage.web.ts`).
 - No navegador, a API só aceita chamadas de `http://localhost:8081`, configurado pela variável `CORS_ALLOWED_ORIGINS` do `.env`. Vazio desliga o CORS, como em produção.
 
@@ -143,7 +144,7 @@ A Home mostra os locais por perto em **lista** (padrão) ou **mapa**:
 - **Expo Go**: o mapa (`react-native-maps`) funciona sem configurar nada. É Google Maps no Android e Apple Maps no iOS, usando a configuração do próprio Expo Go. A chave acima serve para a lista de locais, não para desenhar o mapa.
 - **Navegador**: não tem mapa, porque o `react-native-maps` não roda na web. A Home mostra só a lista, e o seletor Lista | Mapa não aparece.
 - **Build de loja** (EAS): o Android precisa de uma chave própria do **Maps SDK for Android**, configurada no plugin do `react-native-maps` no `app.json`. Isso fica para quando houver build de produção.
-- **Localização no celular**: o app pede permissão na Home. Para testar no Expo Go, o `EXPO_PUBLIC_API_URL` precisa ser o IP do computador na rede (ex.: `http://192.168.1.9:8080`), não `localhost`. Veja o `AccessMap.Front/.env.example`.
+- **Localização no celular**: o app pede permissão na Home. No Expo Go o celular precisa estar na mesma rede Wi-Fi do computador; o endereço da API é descoberto pelo IP do Metro, sem configurar nada (veja o `AccessMap.Front/.env.example`).
 
 ## 👥 Equipe Desenvolvedora
 * João Victor Martins
