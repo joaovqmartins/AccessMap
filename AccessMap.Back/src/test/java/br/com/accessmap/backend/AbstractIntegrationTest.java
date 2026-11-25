@@ -6,6 +6,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -33,5 +34,10 @@ public abstract class AbstractIntegrationTest {
     /** Telefone válido (11 dígitos) e único na JVM: o banco é compartilhado entre as classes e o telefone é UNIQUE. */
     protected static String telefoneUnico() {
         return String.format("119%08d", SEQUENCIA_TELEFONE.incrementAndGet() % 100_000_000L);
+    }
+
+    /** E-mail único na JVM: o cadastro exige e-mail (#109) e ele também é UNIQUE. */
+    protected static String emailUnico() {
+        return "pessoa-" + UUID.randomUUID() + "@teste.com";
     }
 }

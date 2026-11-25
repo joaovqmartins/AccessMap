@@ -114,6 +114,7 @@ public class ApiExceptionHandler {
     private static final Map<String, String> CONFLITOS_DE_UNICIDADE = Map.of(
             "uk_users_phone", UserService.TELEFONE_EM_USO,
             "uk_users_email", UserService.EMAIL_EM_USO,
+            "uk_users_email_lower", UserService.EMAIL_EM_USO,
             "uk_reviews_user_place_active", ReviewService.LOCAL_JA_AVALIADO
     );
 

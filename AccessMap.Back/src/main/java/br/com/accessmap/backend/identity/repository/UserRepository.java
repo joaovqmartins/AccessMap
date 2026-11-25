@@ -16,9 +16,12 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.phone = :phone AND u.id <> :excludeId")
     boolean existsByPhoneExcludingId(String phone, String excludeId);
 
-    boolean existsByEmail(String email);
+    /** O e-mail é gravado em minúsculas (V14), mas a busca ignora a caixa mesmo assim. */
+    Optional<User> findByEmailIgnoreCase(String email);
 
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.id <> :excludeId")
+    boolean existsByEmailIgnoreCase(String email);
+
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE lower(u.email) = lower(:email) AND u.id <> :excludeId")
     boolean existsByEmailExcludingId(String email, String excludeId);
 
     boolean existsByRole(Role role);

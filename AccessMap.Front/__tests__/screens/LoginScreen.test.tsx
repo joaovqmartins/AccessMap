@@ -107,8 +107,16 @@ describe('LoginScreen', () => {
       mockedParams.mockReturnValue({ redirect: '/locais/abc/avaliar' });
       await render(<LoginScreen />);
 
-      const href = JSON.parse(screen.getByTestId('link').props.accessibilityHint);
+      const href = JSON.parse(screen.getByText('Não tem conta? Cadastre-se').props.accessibilityHint);
       expect(href).toEqual({ pathname: '/cadastro', params: { redirect: '/locais/abc/avaliar' } });
+    });
+
+    it('o link de recuperar a senha leva o redirect junto (#109)', async () => {
+      mockedParams.mockReturnValue({ redirect: '/locais/abc/avaliar' });
+      await render(<LoginScreen />);
+
+      const href = JSON.parse(screen.getByText('Esqueci minha senha').props.accessibilityHint);
+      expect(href).toEqual({ pathname: '/esqueci-senha', params: { redirect: '/locais/abc/avaliar' } });
     });
   });
 });

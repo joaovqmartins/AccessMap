@@ -37,7 +37,8 @@ export interface RegisterRequest {
   phone: string;
   password: string;
   name: string;
-  email?: string;
+  /** Obrigatório desde a #109: é por ele que se recupera a senha. */
+  email: string;
   age?: number;
   accessibilityNeeds?: AccessibilityNeed[];
 }

@@ -12,6 +12,7 @@ test('cadastro pela tela leva para a Home já logado', async ({ page }) => {
   await page.goto('/cadastro');
   await page.getByLabel('Nome').fill('Pessoa E2E');
   await page.getByLabel('Telefone').fill(phoneForUi());
+  await page.getByLabel('E-mail').fill(`e2e-${Date.now()}@teste.com`);
   await page.getByLabel('Senha').fill(PASSWORD);
   await page.getByRole('button', { name: 'Cadastrar' }).click();
 
@@ -26,7 +27,22 @@ test('cadastro valida os campos antes de enviar', async ({ page }) => {
 
   await expect(page.getByText('Informe seu nome')).toBeVisible();
   await expect(page.getByText('Informe um telefone com DDD (10 ou 11 dígitos)')).toBeVisible();
+  await expect(page.getByText('Informe um e-mail válido')).toBeVisible();
   await expect(page.getByText('A senha deve ter no mínimo 8 caracteres')).toBeVisible();
+});
+
+test('esqueci minha senha pede o código pelo e-mail (#109)', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('link', { name: 'Esqueci minha senha' }).click();
+
+  await expect(page).toHaveURL('/esqueci-senha');
+  await page.getByLabel('E-mail').fill(`ninguem-${Date.now()}@teste.com`);
+  await page.getByRole('button', { name: 'Enviar código' }).click();
+
+  // A resposta é a mesma exista ou não a conta
+  await expect(page.getByText('Se houver uma conta com esse e-mail, enviamos um código.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Código' })).toBeVisible();
+  await print(page, 'conta-esqueci-senha');
 });
 
 test('senha errada mostra a mensagem certa', async ({ page }) => {

@@ -9,3 +9,11 @@ export const authApi = {
   logout: (refreshToken: string) =>
     request<void>('/api/auth/logout', { method: 'POST', body: { refreshToken }, auth: false }),
 };
+
+export const passwordResetApi = {
+  /** Responde igual exista ou não conta com o e-mail (#109). */
+  request: (email: string) =>
+    request<{ message: string }>('/api/auth/password-reset/request', { method: 'POST', body: { email }, auth: false }),
+  confirm: (body: { email: string; code: string; password: string }) =>
+    request<{ message: string }>('/api/auth/password-reset/confirm', { method: 'POST', body, auth: false }),
+};

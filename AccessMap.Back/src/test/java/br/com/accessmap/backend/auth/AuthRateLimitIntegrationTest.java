@@ -64,7 +64,7 @@ class AuthRateLimitIntegrationTest extends AbstractIntegrationTest {
     }
 
     private ResultActions cadastro(String telefone, String ip) throws Exception {
-        return enviar("/api/auth/register", ip, Map.of("name", "Maria", "phone", telefone, "password", SENHA));
+        return enviar("/api/auth/register", ip, Map.of("name", "Maria", "phone", telefone, "password", SENHA, "email", emailUnico()));
     }
 
     private String contaNova() throws Exception {

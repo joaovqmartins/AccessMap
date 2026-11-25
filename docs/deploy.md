@@ -24,10 +24,15 @@ Não usamos `railway.toml`: o "Config as Code" do Railway foi descontinuado e s�
 | `ADMIN_PHONE` e `ADMIN_PASSWORD` | Telefone e senha do primeiro ADMIN | Só na primeira subida |
 | `CORS_ALLOWED_ORIGINS` | Endereço do app web publicado, se houver | Não: o app no celular não precisa |
 | `FORWARD_HEADERS_STRATEGY` | Já vem `native` no perfil `prod` | Não |
+| `BREVO_API_KEY` | Chave da API do Brevo (Settings > SMTP & API > API Keys) | Sim, para a recuperação de senha funcionar. Sem ela a API sobe, mas não envia o código |
+| `MAIL_FROM` | Remetente verificado no Brevo (Senders, domains & dedicated IPs > Senders) | Sim, junto com a chave |
+| `MAIL_FROM_NAME` | Nome que aparece no e-mail | Não: o padrão é `AccessMap` |
 
 O `DB_URL` não pode usar o `DATABASE_URL` do Railway direto: ele vem no formato `postgresql://usuario:senha@host/banco`, e o Spring só lê endereços que começam com `jdbc:`. Por isso a URL é montada com as variáveis `PG*`.
 
 Os limites de avaliação (`REVIEW_LIMIT_*`) e de login (`AUTH_LIMIT_*`) são opcionais, com os mesmos padrões do `.env.example`.
+
+O e-mail da recuperação de senha (#109) sai pela API HTTP do Brevo, e não por SMTP: o Railway bloqueia as portas de SMTP nos planos Free e Hobby. O plano gratuito do Brevo manda 300 e-mails por dia e não exige domínio próprio, só um remetente verificado. Com um remetente Gmail, o e-mail pode cair no spam; a tela do app avisa isso.
 
 ## 3. Depois da primeira subida
 

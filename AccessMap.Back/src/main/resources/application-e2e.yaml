@@ -29,6 +29,7 @@ accessmap:
       # Todos os testes saem do mesmo IP. O limite por telefone continua o normal.
       login-per-ip: 100000
       register-per-ip: 100000
+      reset-per-ip: 100000
   review:
     rate-limit:
       # As regras de confiabilidade são testadas; o limite de avaliações por hora, não

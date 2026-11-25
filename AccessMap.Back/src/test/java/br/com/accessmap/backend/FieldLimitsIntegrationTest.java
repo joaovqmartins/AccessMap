@@ -79,7 +79,7 @@ class FieldLimitsIntegrationTest extends AbstractIntegrationTest {
     }
 
     private ResultActions cadastrar(Map<String, Object> campos) throws Exception {
-        Map<String, Object> body = new HashMap<>(Map.of("name", "Maria", "phone", telefoneUnico(), "password", SENHA));
+        Map<String, Object> body = new HashMap<>(Map.of("name", "Maria", "phone", telefoneUnico(), "password", SENHA, "email", emailUnico()));
         body.putAll(campos);
         return mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

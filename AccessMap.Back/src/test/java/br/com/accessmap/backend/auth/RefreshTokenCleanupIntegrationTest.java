@@ -46,7 +46,7 @@ class RefreshTokenCleanupIntegrationTest extends AbstractIntegrationTest {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
-                                "name", "Maria", "phone", telefone, "password", "senhaForte123"))))
+                                "name", "Maria", "phone", telefone, "password", "senhaForte123", "email", emailUnico()))))
                 .andExpect(status().isCreated())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString());

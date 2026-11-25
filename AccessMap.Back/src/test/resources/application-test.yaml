@@ -11,6 +11,7 @@ accessmap:
     rate-limit:
       login-per-ip: 100000
       register-per-ip: 100000
+      reset-per-ip: 100000
   jwt:
     # Segredo fixo apenas para testes. Nunca use em outro ambiente.
     secret: chave-de-teste-com-pelo-menos-32-bytes-de-tamanho

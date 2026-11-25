@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { usersApi } from '../api/users';
-import { PASSWORD_MAX_BYTES, PASSWORD_TOO_LONG, utf8Length } from '../constants/limits';
+import { PASSWORD_MAX_BYTES } from '../constants/limits';
 import { spacing } from '../constants/theme';
 import { notify } from '../utils/dialog';
+import { validateNewPassword } from '../utils/password';
 import Button from './Button';
 import ErrorMessage from './ErrorMessage';
 import TextField from './TextField';
@@ -30,8 +31,8 @@ export default function ChangePasswordForm({ onCancel, onChanged }: Props) {
   function validate() {
     const next: Partial<Record<Field, string>> = {};
     if (!currentPassword) next.currentPassword = 'Informe sua senha atual';
-    if (password.length < 8) next.password = 'A nova senha deve ter no mínimo 8 caracteres';
-    else if (utf8Length(password) > PASSWORD_MAX_BYTES) next.password = PASSWORD_TOO_LONG;
+    const passwordError = validateNewPassword(password);
+    if (passwordError) next.password = passwordError;
     else if (password === currentPassword) next.password = 'A nova senha deve ser diferente da atual';
     if (confirmation !== password) next.confirmation = 'As senhas não conferem';
     return next;

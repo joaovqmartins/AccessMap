@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 
 /**
- * Limita tentativas falhas de login e cadastro. Conta qualquer telefone digitado, exista ou não,
- * para que o 429 também não revele quem tem conta.
+ * Limita tentativas falhas de login e cadastro, e os pedidos de código de recuperação de senha.
+ * Conta qualquer telefone digitado, exista ou não, para que o 429 também não revele quem tem conta.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,6 +37,19 @@ public class AuthAttemptService {
 
     public void assertRegisterAllowed(String ip) {
         assertBelowLimit(AuthAttemptKind.REGISTER_IP, ip, limits.registerPerIp());
+    }
+
+    /**
+     * Pedido de código de recuperação de senha: conta todo pedido, não só os falhos, porque a resposta
+     * é sempre a mesma. O limite por e-mail evita encher a caixa de alguém; o por IP, varrer e-mails.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void registerResetRequest(String email, String ip) {
+        assertBelowLimit(AuthAttemptKind.RESET_REQUEST_IP, ip, limits.resetPerIp());
+        assertBelowLimit(AuthAttemptKind.RESET_REQUEST_EMAIL, email, limits.resetPerEmail());
+        record(AuthAttemptKind.RESET_REQUEST_IP, ip);
+        record(AuthAttemptKind.RESET_REQUEST_EMAIL, email);
+        purgeExpired();
     }
 
     /** Transação própria: a exceção que recusa o login desfaz a transação dele, e a falha se perderia junto. */
