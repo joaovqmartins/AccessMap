@@ -1,6 +1,6 @@
 import { Link, Stack, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { placesApi } from '../api/places';
 import { reviewsApi } from '../api/reviews';
@@ -8,10 +8,13 @@ import type { AccessibilityTag, Place, Review } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
+import PlaceLocationMap from '../components/PlaceLocationMap';
+import { placeMapStyles } from '../components/PlaceLocationMap.shared';
 import ReviewCard from '../components/ReviewCard';
 import StarRating from '../components/StarRating';
 import TagStatsBar from '../components/TagStatsBar';
 import { ALL_TAGS } from '../constants/labels';
+import { usePlaceLocation } from '../hooks/usePlaceLocation';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
 import { reviewFormPath } from '../utils/navigation';
 
@@ -31,6 +34,7 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const location = usePlaceLocation(placeId);
 
   const load = useCallback(async () => {
     setError(null);
@@ -94,6 +98,13 @@ export default function PlaceDetailsScreen({ placeId, name }: Props) {
         </>
       ) : (
         <>
+          {location ? (
+            <PlaceLocationMap placeId={placeId} name={name || ''} location={location} />
+          ) : location === undefined && Platform.OS !== 'web' ? (
+            // Reserva o espaço do mapa enquanto o Google responde, para a tela não pular
+            <View style={[placeMapStyles.card, placeMapStyles.placeholder]} accessibilityLabel="Carregando mapa" />
+          ) : null}
+
           <View style={styles.section}>
             <Text style={styles.placeName} accessibilityRole="header">{name || placeId}</Text>
             {place && place.reviewCount > 0 ? (

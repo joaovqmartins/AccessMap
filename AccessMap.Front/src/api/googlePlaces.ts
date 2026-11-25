@@ -5,10 +5,13 @@ import { ApiError } from './client';
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ?? '';
 const AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
+const DETAILS_URL = 'https://places.googleapis.com/v1/places/';
 
 // Só os campos usados: o Google cobra e responde de acordo com o que é pedido.
 const AUTOCOMPLETE_FIELD_MASK = 'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat';
 const NEARBY_FIELD_MASK = 'places.id,places.displayName,places.shortFormattedAddress,places.location';
+// Só campos da faixa "Essentials" do Place Details, a mais barata
+const DETAILS_FIELD_MASK = 'location,formattedAddress';
 
 /** Raio padrão da busca por proximidade, em metros (o Google aceita até 50 km). */
 export const NEARBY_RADIUS_M = 5000;
@@ -47,6 +50,17 @@ type NearbyResponse = {
     shortFormattedAddress?: string;
     location?: { latitude: number; longitude: number };
   }[];
+};
+
+export interface PlaceLocation {
+  latitude: number;
+  longitude: number;
+  address: string;
+}
+
+type DetailsResponse = {
+  location?: { latitude: number; longitude: number };
+  formattedAddress?: string;
 };
 
 export function isGooglePlacesConfigured() {
@@ -120,17 +134,40 @@ export async function searchNearby(
   );
 }
 
-async function post<T>(url: string, fieldMask: string, body: unknown, signal?: AbortSignal): Promise<T> {
+/**
+ * Coordenadas e endereço de um local, para o mapa da tela de detalhes. A busca (autocomplete) não traz
+ * a localização, então a tela pede aqui pelo Place ID. `null` se o Google não conhece o ID.
+ */
+export async function getPlaceLocation(placeId: string, signal?: AbortSignal): Promise<PlaceLocation | null> {
+  const url = `${DETAILS_URL}${encodeURIComponent(placeId)}?languageCode=pt-BR&regionCode=br`;
+  let data: DetailsResponse;
+  try {
+    data = await request<DetailsResponse>(url, DETAILS_FIELD_MASK, undefined, signal);
+  } catch (e) {
+    // 400/404: ID que o Google não conhece (ex.: locais de teste). A tela segue sem o mapa.
+    if (e instanceof ApiError && (e.status === 400 || e.status === 404)) return null;
+    throw e;
+  }
+  if (!data.location) return null;
+  return { ...data.location, address: data.formattedAddress ?? '' };
+}
+
+function post<T>(url: string, fieldMask: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return request<T>(url, fieldMask, body, signal);
+}
+
+/** POST quando há corpo; GET (Place Details) quando não há. */
+async function request<T>(url: string, fieldMask: string, body: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
-      method: 'POST',
+      method: body === undefined ? 'GET' : 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         'X-Goog-Api-Key': API_KEY,
         'X-Goog-FieldMask': fieldMask,
       },
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
   } catch (e) {
