@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AccessibilityNeed, AccessibilityTag } from '../api/types';
 import { ALL_TAGS, NEED_LABELS, TAG_LABELS } from '../constants/labels';
@@ -23,6 +23,8 @@ type Props = {
  */
 export default function FiltersModal({ value, needs, onApply, onClose }: Props) {
   const [draft, setDraft] = useState(value);
+  // Como no menu: dentro de um Modal o SafeAreaView do iOS recebe margem zero
+  const insets = useSafeAreaInsets();
 
   function toggleTag(tag: AccessibilityTag) {
     setDraft((d) => ({
@@ -33,7 +35,7 @@ export default function FiltersModal({ value, needs, onApply, onClose }: Props) 
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.header}>
           <Text style={styles.title} accessibilityRole="header">Filtros de acessibilidade</Text>
           <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Fechar sem aplicar"
@@ -72,7 +74,7 @@ export default function FiltersModal({ value, needs, onApply, onClose }: Props) 
             <Button title="Aplicar" onPress={() => onApply(draft)} />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

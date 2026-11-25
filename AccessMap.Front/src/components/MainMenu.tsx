@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
@@ -15,6 +15,9 @@ type Item = { label: string; href: Href };
 /** Menu do ☰ da Home: painel à esquerda sobre um fundo escurecido que fecha ao tocar. */
 export default function MainMenu({ onClose }: Props) {
   const { user, signOut } = useAuth();
+  // No iOS o SafeAreaView dentro de um Modal recebe margem zero e o topo do menu ficava em cima
+  // do relógio e da bateria. As margens do app (contexto do SafeAreaProvider) valem aqui também.
+  const insets = useSafeAreaInsets();
 
   const items: Item[] = [
     { label: 'Meu perfil', href: '/perfil' },
@@ -37,7 +40,10 @@ export default function MainMenu({ onClose }: Props) {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <SafeAreaView style={styles.panel} accessibilityViewIsModal>
+        <View
+          style={[styles.panel, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: spacing.md + insets.left }]}
+          accessibilityViewIsModal
+        >
           <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={styles.title} accessibilityRole="header">Menu</Text>
@@ -60,7 +66,7 @@ export default function MainMenu({ onClose }: Props) {
           ))}
           <View style={styles.separator} />
           <MenuItem label="Sair da conta" onPress={handleSignOut} danger />
-        </SafeAreaView>
+        </View>
 
         {/* Fundo: tocar fora do painel fecha o menu */}
         <Pressable
