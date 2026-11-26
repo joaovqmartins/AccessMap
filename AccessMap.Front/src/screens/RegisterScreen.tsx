@@ -1,6 +1,6 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
+import { ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ApiError } from '../api/client';
@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen';
 import { PASSWORD_MAX_BYTES, TEXT_MAX } from '../constants/limits';
 import { isValidEmail } from '../utils/email';
 import { safeRedirect, setPendingRedirect } from '../utils/navigation';
@@ -65,7 +66,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingScreen style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.title} accessibilityRole="header">Criar conta</Text>
           <Text style={styles.subtitle}>
@@ -128,7 +129,7 @@ export default function RegisterScreen() {
             Já tem conta? Entrar
           </Link>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   );
 }

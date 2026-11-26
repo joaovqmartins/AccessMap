@@ -1,6 +1,6 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen';
 import { MIN_TOUCH, colors, spacing } from '../constants/theme';
 import { safeRedirect, setPendingRedirect } from '../utils/navigation';
 import { formatPhone, isValidPhone, onlyDigits } from '../utils/phone';
@@ -57,7 +58,7 @@ export default function LoginScreen() {
     <SafeAreaView style={[styles.safe, styles.safeLogin]}>
       {/* Sem cabeçalho marinho aqui: relógio e bateria escuros sobre o fundo claro */}
       <StatusBar style="dark" />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingScreen style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* Decorativa: o título logo abaixo já diz o nome para o leitor de tela */}
           <Image
@@ -114,7 +115,7 @@ export default function LoginScreen() {
             Não tem conta? Cadastre-se
           </Link>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   );
 }

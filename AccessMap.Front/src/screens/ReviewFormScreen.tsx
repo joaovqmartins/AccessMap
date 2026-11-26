@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { reviewsApi } from '../api/reviews';
@@ -11,6 +11,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import StarRatingInput from '../components/StarRatingInput';
 import TagAssessmentPicker from '../components/TagAssessmentPicker';
 import TextField from '../components/TextField';
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen';
 import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
 import { goBackOr } from '../utils/navigation';
@@ -144,7 +145,7 @@ export default function ReviewFormScreen(props: Props) {
   const blocked = props.mode === 'edit' && !original;
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingScreen style={styles.flex}>
       <Stack.Screen options={{ title }} />
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ErrorMessage message={formError} />
@@ -178,7 +179,7 @@ export default function ReviewFormScreen(props: Props) {
           </>
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingScreen>
   );
 }
 

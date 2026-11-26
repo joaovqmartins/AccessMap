@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import type { AccessibilityNeed, User, UserUpdateRequest } from '../api/types';
@@ -12,6 +12,7 @@ import DeleteAccountForm from '../components/DeleteAccountForm';
 import ErrorMessage from '../components/ErrorMessage';
 import NeedsSelector from '../components/NeedsSelector';
 import TextField from '../components/TextField';
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen';
 import { NEED_LABELS } from '../constants/labels';
 import { TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
@@ -118,7 +119,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingScreen style={styles.flex}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {mode === 'delete' ? (
           <View style={styles.section}>
@@ -219,7 +220,7 @@ export default function ProfileScreen() {
           </>
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingScreen>
   );
 }
 
