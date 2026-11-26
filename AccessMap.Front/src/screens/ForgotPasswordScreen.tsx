@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { passwordResetApi } from '../api/auth';
@@ -8,6 +8,7 @@ import { ApiError } from '../api/client';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import TextField from '../components/TextField';
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen';
 import { PASSWORD_MAX_BYTES, TEXT_MAX } from '../constants/limits';
 import { colors, spacing } from '../constants/theme';
 import { notify } from '../utils/dialog';
@@ -85,7 +86,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView style={authStyles.safe} edges={['bottom', 'left', 'right']}>
-      <KeyboardAvoidingView style={authStyles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingScreen style={authStyles.flex}>
         <ScrollView contentContainerStyle={authStyles.content} keyboardShouldPersistTaps="handled">
           <Text style={authStyles.title} accessibilityRole="header">Recuperar senha</Text>
 
@@ -152,7 +153,7 @@ export default function ForgotPasswordScreen() {
             </>
           )}
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   );
 }
