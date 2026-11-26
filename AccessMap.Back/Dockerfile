@@ -26,8 +26,8 @@ COPY --from=build /app/app.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=prod
 
 EXPOSE 8080
-# Liveness (#132): o processo responde. Fora do Railway (docker run, compose), o Docker marca o container
-# como unhealthy se travar. O Railway ignora esta linha e usa o caminho configurado no painel (docs/deploy.md).
+# Liveness (#132): o processo responde. Fora do Render (docker run, compose), o Docker marca o container
+# como unhealthy se travar. O Render usa o caminho configurado no painel (docs/deploy.md).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -fsS "http://localhost:${PORT:-8080}/actuator/health/liveness" || exit 1
 # Heap proporcional a memoria do container, para nao ser encerrado por falta de memoria em planos pequenos

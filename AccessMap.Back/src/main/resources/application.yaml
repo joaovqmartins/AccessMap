@@ -64,7 +64,7 @@ accessmap:
     refresh-cleanup:
       cron: ${REFRESH_CLEANUP_CRON:0 0 4 * * *}
       revoked-retention: ${REFRESH_CLEANUP_REVOKED_RETENTION:7d}
-  # E-mail pela API HTTP do Brevo (o Railway bloqueia SMTP). Sem chave, nada e enviado: o codigo vai para o log.
+  # E-mail pela API HTTP do Brevo (planos gratuitos costumam bloquear SMTP). Sem chave, nada e enviado: o codigo vai para o log.
   mail:
     brevo-api-key: ${BREVO_API_KEY:}
     from: ${MAIL_FROM:nao-responda@accessmap.local}

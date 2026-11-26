@@ -24,7 +24,7 @@ logging:
 
 server:
   port: ${PORT:8080}
-  # Atras do proxy do Railway: sem isso, o limite de login por IP veria todo mundo como um IP so (#107)
+  # Atras do proxy do Render: sem isso, o limite de login por IP veria todo mundo como um IP so (#107)
   forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
 
 accessmap:
