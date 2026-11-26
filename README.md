@@ -31,7 +31,7 @@ O projeto adota uma arquitetura RESTful com separação clara de responsabilidad
 
 **DevOps & CI/CD**
 * Git & GitHub Actions
-* Deploy contínuo na plataforma Railway
+* Deploy contínuo no Render (API), com banco no Neon e e-mail pelo Brevo
 
 ## 🧑‍💻 Ambiente de desenvolvimento
 
@@ -156,7 +156,7 @@ npm run e2e:ci                    # tudo; ou: npm run e2e:ci -- e2e/conta.spec.t
 
 ### Deploy
 
-A API vai para o Railway a partir do `AccessMap.Back/Dockerfile`, que sobe com o perfil `prod` (`application-prod.yaml`). O passo a passo, as variáveis de produção e os erros comuns estão em [`docs/deploy.md`](docs/deploy.md).
+A API está publicada em **https://accessmap-7aow.onrender.com**: roda no Render a partir do `AccessMap.Back/Dockerfile`, com o perfil `prod` (`application-prod.yaml`), o banco no Neon e o e-mail da recuperação de senha pelo Brevo. O passo a passo, as variáveis de produção e os erros comuns estão em [`docs/deploy.md`](docs/deploy.md).
 
 Para testar a imagem de produção na sua máquina, contra o Postgres local:
 

@@ -11,8 +11,8 @@ Os testes automatizados cobrem a API (testes de integração), as telas (Jest) e
 
 | Item | Como |
 |---|---|
-| Backend | Local (`./mvnw spring-boot:run` em `AccessMap.Back`, com o Postgres do `docker compose up -d`) ou o Railway, se a #35 já estiver no ar |
-| App | `npm start` em `AccessMap.Front` e abrir no **Expo Go** do celular. O `EXPO_PUBLIC_API_URL` do `.env.local` precisa apontar para um endereço que o celular alcance: o IP do computador na rede (não `localhost`) ou o domínio do Railway |
+| Backend | Local (`./mvnw spring-boot:run` em `AccessMap.Back`, com o Postgres do `docker compose up -d`) ou a API publicada no Render (`https://accessmap-7aow.onrender.com`) |
+| App | `npm start` em `AccessMap.Front` e abrir no **Expo Go** do celular. O `EXPO_PUBLIC_API_URL` do `.env.local` precisa apontar para um endereço que o celular alcance: o IP do computador na rede (não `localhost`) ou o endereço do Render |
 | Celular | Localização ligada, e um segundo aparelho (ou o navegador) para a parte de denúncias |
 
 ### Contas de teste
@@ -138,7 +138,7 @@ O vídeo **não entra no git** por causa do tamanho. Suba no Drive do grupo (ou 
 | Data | |
 | Quem rodou | |
 | Aparelho e sistema | |
-| Backend | Local ou Railway |
+| Backend | Local ou Render |
 | Versão (commit da `main`) | |
 | Vídeo | |
 | Passos ✅ | /34 |
